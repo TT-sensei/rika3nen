@@ -13,6 +13,7 @@
   const soundToggle = document.querySelector("#soundToggle");
   let answerState = { selected: null, checked: false, assignments: {}, selectedCard: null };
   let reviewState = null;
+  const sessionItems = {};
 
   function defaultData() { return { version: 1, completed: {}, attempts: {}, mistakes: {}, sound: false }; }
   function loadData() {
@@ -26,6 +27,7 @@
   const activityKey = (unitId, phase, id) => `${unitId}.${phase}.${id}`;
   const unitById = id => window.SCIENCE_UNITS.find(unit => unit.id === id);
   const itemsFor = (unit, phase) => unit?.[phase] || [];
+  function sessionFor(unit, phase) { const key=`${unit.id}.${phase}`; if(!sessionItems[key]) { const all=itemsFor(unit,phase), unfinished=all.filter(item=>!data.completed[activityKey(unit.id,phase,item.id)]), source=unfinished.length?unfinished:all; sessionItems[key]=[...source].sort(()=>Math.random()-.5).slice(0,Math.min(3,source.length)).map(item=>item.id); } return itemsFor(unit,phase).filter(item=>sessionItems[key].includes(item.id)); }
   const totalActivities = unit => Object.keys(PHASES).reduce((sum, phase) => sum + itemsFor(unit, phase).length, 0);
   const completedCount = unit => Object.keys(PHASES).reduce((sum, phase) => sum + itemsFor(unit, phase).filter(item => data.completed[activityKey(unit.id, phase, item.id)]).length, 0);
   const unitPercent = unit => Math.round(completedCount(unit) / totalActivities(unit) * 100);
@@ -74,7 +76,7 @@
     const unit = unitById(route.unitId);
     if (!unit) return renderNotFound();
     const phase = route.phase;
-    const items = itemsFor(unit, phase);
+    const items = sessionFor(unit, phase);
     const index = Math.min(route.index, items.length - 1);
     const item = items[index];
     answerState = { selected: null, checked: false, assignments: {}, selectedCard: null };
@@ -97,7 +99,7 @@
     const card = document.querySelector(".activity-card");
     if (!card) return null;
     const unit = unitById(card.dataset.unitId), phase = card.dataset.phase, index = Number(card.dataset.index);
-    return { card, unit, phase, index, item: itemsFor(unit, phase)[index] };
+    return { card, unit, phase, index, item: sessionFor(unit, phase)[index] };
   }
   function chooseAnswer(button) {
     if (answerState.checked) return;
@@ -155,8 +157,9 @@
   function setNextButton(ctx) {
     const button = document.querySelector("[data-check]");
     button.disabled = false; button.removeAttribute("data-check");
-    const list = itemsFor(ctx.unit, ctx.phase);
+    const list = sessionFor(ctx.unit, ctx.phase);
     if (ctx.index < list.length - 1) { button.textContent = "次の問題へ"; button.dataset.next = String(ctx.index + 1); }
+    else if (!phaseDone(ctx.unit, ctx.phase)) { delete sessionItems[`${ctx.unit.id}.${ctx.phase}`]; button.textContent="次の研究へ"; button.dataset.nextBatch="true"; }
     else { const keys = Object.keys(PHASES), nextPhase = keys[keys.indexOf(ctx.phase) + 1]; button.textContent = nextPhase ? "次の段階へ" : "単元一覧へ"; button.dataset.nextPhase = nextPhase || "home"; }
   }
 
@@ -205,6 +208,7 @@
     else if (target.matches("[data-retry-question]")) render();
     else if (target.matches("[data-prev]") && route.page === "unit") routeTo(`unit/${route.unitId}/${route.phase}/${Math.max(0, route.index-1)}`);
     else if (target.dataset.next && route.page === "unit") routeTo(`unit/${route.unitId}/${route.phase}/${target.dataset.next}`);
+    else if (target.dataset.nextBatch && route.page === "unit") routeTo(`unit/${route.unitId}/${route.phase}/0`);
     else if (target.dataset.nextPhase === "home") routeTo("");
     else if (target.dataset.nextPhase && route.page === "unit") routeTo(`unit/${route.unitId}/${target.dataset.nextPhase}/0`);
     else if (target.matches("[data-review-choice]")) answerReview(Number(target.dataset.reviewChoice));
