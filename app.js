@@ -52,6 +52,7 @@
     const parts = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
     if (parts[0] === "unit") return { page: "unit", unitId: parts[1], phase: PHASES[parts[2]] ? parts[2] : "knowledge", index: Math.max(0, Number(parts[3]) || 0) };
     if (parts[0] === "review") return { page: "review" };
+    if (parts[0] === "discoveries") return { page: "discoveries" };
     return { page: "home" };
   }
   const unitStyle = unit => `--unit-color:${unit.color};--unit-pale:${unit.pale}`;
@@ -64,7 +65,7 @@
       <p>同じところと、ちがうところに目を向けると、「どうしてだろう？」が生まれます。予想を立てて観察や実験をし、見つけたことを自分の言葉でまとめよう。</p>
       <div class="thinking-flow" aria-label="3年生の問題解決の流れ"><span>くらべる</span><b>→</b><span>気づく</span><b>→</b><span>予想してためす</span><b>→</b><span>発見をまとめる</span></div>
       <div class="overall-progress"><div class="progress-label"><span>全体の学習記録</span><span>${progress.done} / ${progress.total}</span></div><div class="progress-track" role="progressbar" aria-label="全体の進み具合" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress.percent}"><div class="progress-fill" style="width:${progress.percent}%"></div></div></div>
-    </section>
+    </section>${window.ScienceGame ? window.ScienceGame.panel() : ""}
     <div class="section-heading"><h2>10の単元</h2><p>学びたい単元を選ぼう</p></div>
     <section class="unit-grid" aria-label="単元一覧">${window.SCIENCE_UNITS.map((unit, index) => `<button class="unit-card" data-unit="${unit.id}" style="${unitStyle(unit)}"><span class="unit-top"><span class="unit-icon" aria-hidden="true">${unit.icon}</span><span class="unit-number">UNIT ${index + 1}</span></span><h3>${unit.title}</h3><p>${unit.summary}</p><span class="mini-progress"><span class="progress-track"><span class="progress-fill" style="width:${unitPercent(unit)}%"></span></span><span>${unitPercent(unit)}%</span></span></button>`).join("")}</section>`;
   }
@@ -122,13 +123,14 @@
     document.querySelector("[data-check]").disabled = Object.keys(answerState.assignments).length !== ctx.item.cards.length;
   }
   function recordAttempt(ctx, correct, wrongCards = []) {
-    const key = activityKey(ctx.unit.id, ctx.phase, ctx.item.id);
+    const key = activityKey(ctx.unit.id, ctx.phase, ctx.item.id), wasCompleted = !!data.completed[key];
     if (!data.attempts[key]) data.attempts[key] = { count: 0, firstCorrect: null };
     data.attempts[key].count += 1;
     if (data.attempts[key].firstCorrect === null) data.attempts[key].firstCorrect = correct;
     if (correct) data.completed[key] = true;
     wrongCards.forEach(i => { data.mistakes[`${key}.${i}`] = (data.mistakes[`${key}.${i}`] || 0) + 1; });
     save();
+    window.ScienceGame?.award({ unitId: ctx.unit.id, phase: ctx.phase, itemId: ctx.item.id, correct, wasCompleted, unitComplete: correct && completedCount(ctx.unit) === totalActivities(ctx.unit) });
   }
   function checkAnswer() { const ctx = getCurrentContext(); if (ctx) ctx.phase === "preparation" ? checkPreparation(ctx) : checkQuestion(ctx); }
   function checkQuestion(ctx) {
@@ -185,12 +187,13 @@
     try { const AudioContext = window.AudioContext || window.webkitAudioContext, ctx = new AudioContext(), osc = ctx.createOscillator(), gain = ctx.createGain(); osc.frequency.value = correct ? 660 : 190; gain.gain.setValueAtTime(.05, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .16); osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + .16); } catch (_) { /* 学習は続けられる */ }
   }
   function showToast(message) { toast.textContent = message; toast.classList.add("show"); setTimeout(() => toast.classList.remove("show"), 1800); }
-  function render() { const route = parseRoute(); if (route.page === "unit") renderUnit(route); else if (route.page === "review") renderReview(); else renderHome(); app.focus({ preventScroll: true }); }
+  function render() { const route = parseRoute(); if (route.page === "unit") renderUnit(route); else if (route.page === "review") renderReview(); else if (route.page === "discoveries") app.innerHTML = window.ScienceGame?.catalog() || ""; else renderHome(); app.focus({ preventScroll: true }); }
 
   document.addEventListener("click", event => {
     const target = event.target.closest("button"); if (!target) return;
     const route = parseRoute();
     if (target.matches("[data-home]")) routeTo("");
+    else if (target.matches("[data-discoveries]")) routeTo("discoveries");
     else if (target.dataset.unit) routeTo(`unit/${target.dataset.unit}/knowledge/0`);
     else if (target.dataset.phase && route.page === "unit") routeTo(`unit/${route.unitId}/${target.dataset.phase}/0`);
     else if (target.dataset.index && route.page === "unit") routeTo(`unit/${route.unitId}/${route.phase}/${target.dataset.index}`);
