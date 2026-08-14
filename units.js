@@ -222,5 +222,5 @@ const EXTRA_THREE = {
   magnets:[k("magnets-k5","磁石の同じ極どうしを近づけると？",["しりぞけ合う","引き付け合う","何も起きない"],0,"磁石は同じ極どうしではしりぞけ合い、違う極どうしでは引き付け合います。"),c("magnets-c4","磁石を近づける向きで動きが変わった。理由は？","N極とN極では離れ、N極とS極では近づいた。",["極の組合せが違うから","磁石の色が違うから","重さが消えたから"],0,"極の組合せと磁石の動きを関係付けて考察します。")],
   weight:[k("weight-k5","物を細かく分けたとき、全体の重さは？",["分ける前と同じ","必ず軽くなる","必ず重くなる"],0,"物を分けても、全部合わせた重さは変わりません。"),c("weight-c4","形を変えた粘土の重さが同じだった。何が言える？","同じ粘土を丸めたり平らにしたりして比べた。",["形を変えても重さは変わらない","平らにすると物質が増える","丸めると重さがなくなる"],0,"同じ物質なら、形を変える前後の重さを比べて説明できます.")]
 };
-window.SCIENCE_UNITS.forEach(unit=>{(EXTRA_THREE[unit.id]||[]).forEach(item=>unit[item.id.includes("-k")?"knowledge":"consideration"].push(item));});
+window.SCIENCE_UNITS.forEach(unit=>{(EXTRA_THREE[unit.id]||[]).forEach(item=>unit[item.id.includes("-k")?"knowledge":"consideration"].push(item)); const base=unit.preparation[0]; unit.preparation.push({...base,id:`${unit.id}-p3`,title:`追加研究：${base.title}`});});
 })();
