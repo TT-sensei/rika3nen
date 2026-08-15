@@ -31,6 +31,19 @@
     if(gained) { state.xp+=gained; save(); if(rank()>before) { tone(); overlay(`${RANKS[rank()][0]} になった！`, `研究XP ${state.xp} XP。次の発見も楽しみだね。`, "rank"); } }
   }
   function panel() { const s=info(), n=s.next, max=n?n[1]:s.xp||1, base=RANKS[s.rank][1], pct=n?Math.min(100,Math.round((s.xp-base)/(max-base)*100)):100; return `<section class="research-panel"><div><span class="research-kicker">研究ランク</span><b>${esc(s.name)} Lv.${s.rank+1}</b><small>${n?`あと ${n[1]-s.xp} XPでランクアップ！`:"最高ランクに到達！"}</small></div><div class="research-meter"><span style="width:${pct}%"></span></div><strong>${s.xp} / ${n?max:"MAX"} XP</strong><button type="button" data-discoveries>🔍 発見図鑑　${s.discoveries} / ${s.total}</button></section>`; }
-  function catalog() { const facts=FACTS[grade]||{}; const items=[]; Object.entries(facts).forEach(([id,fact])=> { const got=state.discoveries[`major.${id}`], icon=ICONS[id]||"🔬";items.push(`<article class="discovery-card ${got?"found":"hidden"}">${got&&BADGES[id]?`<img class="discovery-badge" src="${BADGE_BASE}${BADGES[id]}/badge.png" alt="">`:`<span>${got?icon:"？"}</span>`}<b>${got?esc(got.title):"？？？"}</b><small>${got?esc(fact):"研究を進めると見つかるよ"}</small></article>`); }); return `<section class="catalog-page"><button class="text-button" data-home>単元一覧へ</button><p class="eyebrow">DISCOVERY BOOK</p><h1>発見図鑑　${info().discoveries} / ${info().total}</h1><p>見つけた大発見は、いつでもここで確かめられるよ。</p><div class="discovery-grid">${items.join("")}</div></section>`; }
+  function catalog() {
+    const facts=FACTS[grade]||{};
+    const phaseLabels={knowledge:"知識の発見",preparation:"実験計画の発見",consideration:"考察の発見"};
+    const items=[];
+    Object.entries(facts).forEach(([id,fact]) => {
+      ["knowledge","preparation","consideration"].forEach(phase => {
+        const got=state.discoveries[`${id}.${phase}`];
+        items.push(`<article class="discovery-card ${got?"found":"hidden"}"><span>${got?"🔍":"？"}</span><b>${got?esc(got.title):phaseLabels[phase]}</b><small>${got?esc(got.text):"この単元の学習を進めると見つかるよ"}</small></article>`);
+      });
+      const got=state.discoveries[`major.${id}`], icon=ICONS[id]||"🔬";
+      items.push(`<article class="discovery-card ${got?"found":"hidden"}">${got&&BADGES[id]?`<img class="discovery-badge" src="${BADGE_BASE}${BADGES[id]}/badge.png" alt="">`:`<span>${got?icon:"？"}</span>`}<b>${got?"大発見":"大発見（未発見）"}</b><small>${got?esc(fact):"単元を最後まで進めると見つかるよ"}</small></article>`);
+    });
+    return `<section class="catalog-page"><button class="text-button" data-home>単元一覧へ</button><p class="eyebrow">DISCOVERY BOOK</p><h1>発見図鑑　${info().discoveries} / ${info().total}</h1><p>知識・実験計画・考察・大発見を集めよう。大発見には特別なバッジがつくよ。</p><div class="discovery-grid">${items.join("")}</div></section>`;
+  }
   window.ScienceGame={award,panel,catalog,celebrate};
 })();
