@@ -164,7 +164,12 @@
   }
 
   function startReview() {
-    reviewState = { index: 0, score: 0, misses: [], finished: false, questions: window.SCIENCE_UNITS.map(unit => ({ unitId: unit.id, item: unit.consideration[0] })) };
+    const pick = (items, count) => [...items].sort(() => Math.random() - .5).slice(0, Math.min(count, items.length));
+    const questions = window.SCIENCE_UNITS.flatMap(unit => {
+      const pool = [...(unit.knowledge || []), ...(unit.consideration || [])];
+      return pick(pool, 3).map(item => ({ unitId: unit.id, item }));
+    }).sort(() => Math.random() - .5);
+    reviewState = { index: 0, score: 0, misses: [], finished: false, questions };
   }
   function renderReview() {
     if (!reviewState) startReview();
