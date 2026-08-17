@@ -175,7 +175,7 @@
     if (!reviewState) startReview();
     if (reviewState.finished) return renderReviewResult();
     const entry = reviewState.questions[reviewState.index], unit = unitById(entry.unitId), item = entry.item;
-    app.innerHTML = `<div class="review-head"><div><p class="eyebrow">10単元のまとめ</p><h1>まとめチェック</h1><p>くらべる・予想する・発見する力を、各単元から1問ずつ確かめます。</p></div><b>${reviewState.index + 1} / ${reviewState.questions.length}</b></div><article class="activity-card review-card" style="${unitStyle(unit)}"><span class="activity-count">${unit.icon} ${unit.title}</span><h2>${item.prompt}</h2><div class="evidence"><b>観察・実験の結果</b>${item.evidence}</div><div class="choices">${orderedChoices(item).map(choice=>`<button class="choice" data-review-choice="${choice.original}">${escapeHtml(choice.text)}</button>`).join("")}</div><div class="answer-area"></div></article>`;
+    app.innerHTML = `<div class="review-head"><div><p class="eyebrow">10単元のまとめ</p><h1>まとめチェック</h1><p>くらべる・予想する・発見する力を、各単元から3問ずつ、合計でたくさんの問題をランダムに確かめます。</p></div><b>${reviewState.index + 1} / ${reviewState.questions.length}</b></div><article class="activity-card review-card" style="${unitStyle(unit)}"><span class="activity-count">${unit.icon} ${unit.title}</span><h2>${item.prompt}</h2><div class="evidence"><b>観察・実験の結果</b>${item.evidence}</div><div class="choices">${orderedChoices(item).map(choice=>`<button class="choice" data-review-choice="${choice.original}">${escapeHtml(choice.text)}</button>`).join("")}</div><div class="answer-area"></div></article>`;
   }
   function answerReview(choiceIndex) {
     const entry = reviewState.questions[reviewState.index], correct = choiceIndex === entry.item.answer;
