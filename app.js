@@ -164,13 +164,18 @@
   }
 
   function startReview() {
-    reviewState = { index: 0, score: 0, misses: [], finished: false, questions: window.SCIENCE_UNITS.map(unit => ({ unitId: unit.id, item: unit.consideration[0] })) };
+    const pick = (items, count) => [...items].sort(() => Math.random() - .5).slice(0, Math.min(count, items.length));
+    const questions = window.SCIENCE_UNITS.flatMap(unit => {
+      const pool = [...(unit.knowledge || []), ...(unit.consideration || [])];
+      return pick(pool, 3).map(item => ({ unitId: unit.id, item }));
+    }).sort(() => Math.random() - .5);
+    reviewState = { index: 0, score: 0, misses: [], finished: false, questions };
   }
   function renderReview() {
     if (!reviewState) startReview();
     if (reviewState.finished) return renderReviewResult();
     const entry = reviewState.questions[reviewState.index], unit = unitById(entry.unitId), item = entry.item;
-    app.innerHTML = `<div class="review-head"><div><p class="eyebrow">10単元のまとめ</p><h1>まとめチェック</h1><p>くらべる・予想する・発見する力を、各単元から1問ずつ確かめます。</p></div><b>${reviewState.index + 1} / ${reviewState.questions.length}</b></div><article class="activity-card review-card" style="${unitStyle(unit)}"><span class="activity-count">${unit.icon} ${unit.title}</span><h2>${item.prompt}</h2><div class="evidence"><b>観察・実験の結果</b>${item.evidence}</div><div class="choices">${orderedChoices(item).map(choice=>`<button class="choice" data-review-choice="${choice.original}">${escapeHtml(choice.text)}</button>`).join("")}</div><div class="answer-area"></div></article>`;
+    app.innerHTML = `<div class="review-head"><div><p class="eyebrow">10単元のまとめ</p><h1>まとめチェック</h1><p>くらべる・予想する・発見する力を、各単元から3問ずつ、合計でたくさんの問題をランダムに確かめます。</p></div><b>${reviewState.index + 1} / ${reviewState.questions.length}</b></div><article class="activity-card review-card" style="${unitStyle(unit)}"><span class="activity-count">${unit.icon} ${unit.title}</span><h2>${item.prompt}</h2><div class="evidence"><b>観察・実験の結果</b>${item.evidence}</div><div class="choices">${orderedChoices(item).map(choice=>`<button class="choice" data-review-choice="${choice.original}">${escapeHtml(choice.text)}</button>`).join("")}</div><div class="answer-area"></div></article>`;
   }
   function answerReview(choiceIndex) {
     const entry = reviewState.questions[reviewState.index], correct = choiceIndex === entry.item.answer;
@@ -190,7 +195,7 @@
     try { const AudioContext = window.AudioContext || window.webkitAudioContext, ctx = new AudioContext(), osc = ctx.createOscillator(), gain = ctx.createGain(); osc.frequency.value = correct ? 660 : 190; gain.gain.setValueAtTime(.05, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .16); osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + .16); } catch (_) { /* 学習は続けられる */ }
   }
   function showToast(message) { toast.textContent = message; toast.classList.add("show"); setTimeout(() => toast.classList.remove("show"), 1800); }
-  function render() { const route = parseRoute(); if (route.page === "unit") renderUnit(route); else if (route.page === "review") renderReview(); else if (route.page === "discoveries") app.innerHTML = window.ScienceGame?.catalog() || ""; else renderHome(); app.focus({ preventScroll: true }); }
+  function render() { const route = parseRoute(); if (route.page === "unit") renderUnit(route); else if (route.page === "review") renderReview(); else if (route.page === "discoveries") app.innerHTML = window.ScienceGame?.catalog() || ""; else renderHome(); app.focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: "smooth" }); }
 
   document.addEventListener("click", event => {
     const target = event.target.closest("button"); if (!target) return;
