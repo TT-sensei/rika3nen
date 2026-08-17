@@ -195,7 +195,7 @@
     try { const AudioContext = window.AudioContext || window.webkitAudioContext, ctx = new AudioContext(), osc = ctx.createOscillator(), gain = ctx.createGain(); osc.frequency.value = correct ? 660 : 190; gain.gain.setValueAtTime(.05, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .16); osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + .16); } catch (_) { /* 学習は続けられる */ }
   }
   function showToast(message) { toast.textContent = message; toast.classList.add("show"); setTimeout(() => toast.classList.remove("show"), 1800); }
-  function render() { const route = parseRoute(); if (route.page === "unit") renderUnit(route); else if (route.page === "review") renderReview(); else if (route.page === "discoveries") app.innerHTML = window.ScienceGame?.catalog() || ""; else renderHome(); app.focus({ preventScroll: true }); }
+  function render() { const route = parseRoute(); if (route.page === "unit") renderUnit(route); else if (route.page === "review") renderReview(); else if (route.page === "discoveries") app.innerHTML = window.ScienceGame?.catalog() || ""; else renderHome(); app.focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: "smooth" }); }
 
   document.addEventListener("click", event => {
     const target = event.target.closest("button"); if (!target) return;
