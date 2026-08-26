@@ -10,7 +10,7 @@
       '<section class="lab-screen instant-lab" style="--lab-accent:' + esc(manifest.accent || "#2a8068") + '">' +
         '<nav class="breadcrumbs" aria-label="現在位置"><button class="text-button" type="button" data-lab-home>シミュレーション一覧</button><span>›</span><span>' + esc(manifest.title) + '</span></nav>' +
         '<header class="lab-titlebar"><div><p class="eyebrow">SIMULATION LAB / ' + esc(manifest.unit) + '</p><h1>' + esc(manifest.title) + '</h1><p>' + esc(manifest.summary) + '</p></div><button class="secondary-button lab-back" type="button" data-lab-home>一覧へ戻る</button></header>' +
-        '<div class="lab-workspace"><section class="simulation-column" aria-label="シミュレーション"><div class="sim-stage" data-sim-stage></div><div class="sim-readout" data-sim-readout aria-live="polite"></div><div class="sim-actions" data-sim-actions></div></section><aside class="control-panel instant-panel" aria-label="条件操作"><div class="control-heading"><p class="eyebrow">TRY IT</p><h2>条件を変えてみよう</h2><p>動かすと、図と結果がすぐ変わります。</p></div><div data-control-panel></div></aside></div>' +
+        '<div class="lab-workspace"><section class="simulation-column" aria-label="シミュレーション"><div class="sim-stage" data-sim-stage></div><div class="sim-readout" data-sim-readout aria-live="polite"></div><div class="sim-actions" data-sim-actions></div></section><aside class="control-panel instant-panel" aria-label="条件操作"><div class="control-heading"><p class="eyebrow">TRY IT</p><h2>条件を変えてみよう</h2><p>一つずつ変えると、ちがいが見つけやすくなります。</p></div><div data-control-panel></div><section class="trial-panel" aria-labelledby="trialTitle"><div class="trial-heading"><h3 id="trialTitle">くらべた結果</h3><button type="button" data-clear-trials>消す</button></div><div class="trial-list" data-trial-list><p>「この結果をくらべる」で3回分を並べられます。</p></div></section></aside></div>' +
         '<p class="model-note" data-model-note></p></section>';
     const view = root.querySelector(".lab-screen");
     const cleanups = [];
@@ -21,6 +21,15 @@
       return handler;
     };
     view.querySelectorAll("[data-lab-home]").forEach(button => on(button, "click", () => onHome && onHome()));
+    const trialList = view.querySelector("[data-trial-list]");
+    let trialDraft = null;
+    let trials = [];
+    const renderTrials = () => {
+      trialList.innerHTML = trials.length ? trials.map((trial, index) =>
+        '<article><span>' + (trials.length - index) + '</span><div><b>' + esc(trial.condition) + '</b><small>' + esc(trial.result) + '</small></div></article>'
+      ).join("") : '<p>「この結果をくらべる」で3回分を並べられます。</p>';
+    };
+    on(view.querySelector("[data-clear-trials]"), "click", () => { trials = []; renderTrials(); });
     return {
       root: view,
       stage: view.querySelector("[data-sim-stage]"),
@@ -28,6 +37,13 @@
       actions: view.querySelector("[data-sim-actions]"),
       panel: view.querySelector("[data-control-panel]"),
       note: view.querySelector("[data-model-note]"),
+      setTrial: trial => { trialDraft = trial; },
+      saveTrial: () => {
+        if (!trialDraft) return false;
+        trials = [trialDraft, ...trials].slice(0, 3);
+        renderTrials();
+        return true;
+      },
       on: on,
       destroy: () => {
         cleanups.splice(0).forEach(cleanup => cleanup());
@@ -56,7 +72,7 @@
     const update = next => { input.value = next; output.textContent = format(Number(next)); };
     input.addEventListener("input", () => { output.textContent = format(Number(input.value)); if (onInput) onInput(Number(input.value)); });
     parent.append(row);
-    return { input, output, set: update };
+    return { input, output, set: update, setMax: next => { input.max = next; if (Number(input.value) > Number(next)) update(next); } };
   }
 
   function options(parent, config) {
