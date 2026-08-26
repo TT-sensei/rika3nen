@@ -373,3 +373,8 @@ main.lab-main { width: min(1400px, calc(100% - 28px)); }
 .home-mode-panel[data-home-panel="units"]{background:#f3f7fd;border:1px solid #d7e3f3;border-radius:13px;padding:10px}
 .home-collection-strip{margin-top:14px}
 .lab-library{padding-bottom:18px}
+
+/* Grade theme: 3rd grade / sky blue */
+:root{--ink:#173b52;--muted:#5d7584;--canvas:#eaf6fb;--main:#2387a8;--dark:#15506c;--pale:#d9f0f8;--blue:#2f8fb5;--line:#c7e0ea;--shadow:0 10px 28px rgba(21,80,108,.12)}
+body{background:radial-gradient(circle at 95% 0,#cfeef7 0 14rem,transparent 14rem),var(--canvas)}
+.hero{background:linear-gradient(125deg,var(--dark),#2b8eaa)}
