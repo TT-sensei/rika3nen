@@ -144,7 +144,7 @@
   function windrubber(view, core) {
     const state = { force: 55, source: "wind" };
     const section = core.section(view.panel, "力の大きさを変える", "風の強さやゴムの伸びを変えて、車の距離を見よう。");
-    const source = core.options(section, { label: "力の種類", values: [option("wind", "風"), option("rubber", "ゴム")], value: state.source, format: item => item.label, onChange: value => { state.source = value; draw(); } });
+    const source = core.options(section, { label: "力の種類", values: [option("wind", "風"), option("rubber", "ゴム")], value: state.source, format: item => item.label, onChange: value => { state.source = value; force.setLabel(value === "wind" ? "風の強さ" : "ゴムの伸び"); draw(); } });
     const force = core.range(section, { label: state.source === "wind" ? "風の強さ" : "ゴムの伸び", min: 0, max: 100, value: state.force, format: value => value + "%", onInput: value => { state.force = value; draw(); } });
     function draw() {
       const distance = Math.round(state.force * 2.45);
