@@ -15,6 +15,16 @@
     const view = root.querySelector(".lab-screen");
     const stage = view.querySelector("[data-sim-stage]");
     const cleanups = [];
+    let sceneTimer = 0;
+    const sceneObserver = new MutationObserver(() => {
+      stage.classList.remove("is-changing");
+      void stage.offsetWidth;
+      stage.classList.add("is-changing");
+      window.clearTimeout(sceneTimer);
+      sceneTimer = window.setTimeout(() => stage.classList.remove("is-changing"), 360);
+    });
+    sceneObserver.observe(stage, { childList: true });
+    cleanups.push(() => { sceneObserver.disconnect(); window.clearTimeout(sceneTimer); });
     const on = (target, event, handler, options) => {
       if (!target) return handler;
       target.addEventListener(event, handler, options);
@@ -22,6 +32,19 @@
       return handler;
     };
     view.querySelectorAll("[data-lab-home]").forEach(button => on(button, "click", () => onHome && onHome()));
+    const challenges = Array.isArray(manifest.challenges) ? manifest.challenges : [];
+    if (challenges.length) {
+      const mission = document.createElement("section");
+      mission.className = "discovery-mission";
+      mission.innerHTML = '<div class="mission-heading"><span aria-hidden="true">🔎</span><div><small>はっけんミッション</small><b data-mission-text>' + esc(challenges[0]) + '</b></div></div><div class="mission-dots" role="group" aria-label="ミッションを選ぶ">' +
+        challenges.map((item, index) => '<button type="button" aria-pressed="' + (index === 0) + '" data-mission-index="' + index + '">' + (index + 1) + '</button>').join("") + '</div>';
+      const controlArea = view.querySelector("[data-control-panel]");
+      controlArea.insertAdjacentElement("afterend", mission);
+      mission.querySelectorAll("[data-mission-index]").forEach(button => on(button, "click", () => {
+        mission.querySelectorAll("[data-mission-index]").forEach(item => item.setAttribute("aria-pressed", String(item === button)));
+        mission.querySelector("[data-mission-text]").textContent = challenges[Number(button.dataset.missionIndex)];
+      }));
+    }
     on(stage, "pointerdown", event => {
       const rect = stage.getBoundingClientRect();
       const spark = document.createElement("span");
@@ -82,7 +105,7 @@
     const update = next => { input.value = next; output.textContent = format(Number(next)); };
     input.addEventListener("input", () => { output.textContent = format(Number(input.value)); if (onInput) onInput(Number(input.value)); });
     parent.append(row);
-    return { input, output, set: update, setMax: next => { input.max = next; if (Number(input.value) > Number(next)) update(next); } };
+    return { input, output, set: update, setLabel: next => { row.querySelector("span").firstChild.textContent = next; }, setMax: next => { input.max = next; if (Number(input.value) > Number(next)) update(next); } };
   }
 
   function options(parent, config) {
