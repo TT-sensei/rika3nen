@@ -9,7 +9,7 @@
     ["matter","物質"],["energy","エネルギー"]
   ];
   const elements = ["fire","water","nature","thunder","ice","wind","earth","light","moon","crystal","shadow","gravity","cosmos","psychic","sound","rainbow","dream","bubble","cloud","flower","fairy","candy","rain"];
-  const collections = ["animal","sea-animal","fruit","sweets","gem","dinosaur","space","fantasy","insect","car"];
+  const collections = ["animal","sea-animal","fruit","gem","dinosaur","space","fantasy","insect","treasure","flower"];
   const KEY = "rikaLabAssets" + grade + ".v1";
   let state = {}; try { state = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (_) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) {} };
