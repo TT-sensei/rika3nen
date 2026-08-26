@@ -391,3 +391,17 @@ body{background:radial-gradient(circle at 95% 0,#cfeef7 0 14rem,transparent 14re
 @keyframes labSceneRefresh{from{opacity:.55;transform:scale(.992)}to{opacity:1;transform:scale(1)}}
 @media(max-width:720px){.discovery-mission{grid-template-columns:1fr}.mission-dots{justify-content:flex-end}}
 @media(prefers-reduced-motion:reduce){.instant-lab .sim-stage.is-changing svg,.instant-lab .sim-stage.is-changing .instant-result{animation:none}}
+
+
+/* Diagram clarity pass: arrows and labels explain the scientific relationship. */
+.extra-svg .tiny-label{font-size:10px;font-weight:800;letter-spacing:.01em}
+.light-lab-svg .diagram-key text{font-size:12px;font-weight:900}
+.light-lab-svg .sim-mirror{filter:drop-shadow(0 2px 2px rgba(34,65,72,.18))}
+.circuit-diagram .circuit-charge{transform-box:fill-box;transform-origin:center;animation:circuitChargePulse 1.2s ease-in-out var(--charge-delay) infinite}
+.rainwater-diagram .soak-arrow{stroke-dasharray:7 6;animation:waterSoak 1.2s linear infinite}
+.rainwater-diagram .runoff-arrow{stroke-dasharray:13 10;animation:waterRunoff 1s linear infinite}
+.motor-circuit-diagram circle,.circuit-diagram circle{vector-effect:non-scaling-stroke}
+@keyframes circuitChargePulse{0%,100%{opacity:.4;transform:scale(.75)}50%{opacity:1;transform:scale(1.18)}}
+@keyframes waterSoak{to{stroke-dashoffset:-26}}
+@keyframes waterRunoff{to{stroke-dashoffset:-46}}
+@media(prefers-reduced-motion:reduce){.circuit-diagram .circuit-charge,.rainwater-diagram .soak-arrow,.rainwater-diagram .runoff-arrow{animation:none}}
