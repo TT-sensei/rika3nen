@@ -245,27 +245,50 @@
 
   function light(view, core) {
     const state = { angle: 90, mirrors: 1 };
-    const section = core.section(view.panel, "反射の条件を変える", "鏡の向きや枚数を変えて、光の進み方を比べよう。");
-    const angle = core.range(section, { label: "鏡の向き", min: 35, max: 145, value: state.angle, format: value => value + "°", onInput: value => { state.angle = value; draw(); } });
-    const mirrors = core.options(section, { label: "鏡の枚数", values: [option("1", "1枚"), option("2", "2枚"), option("3", "3枚")], value: String(state.mirrors), format: item => item.label, onChange: value => { state.mirrors = Number(value); draw(); } });
+    const section = core.section(view.panel, "反射の条件を変える", "黄色い線をたどって、光が鏡ではね返る道すじを見よう。");
+    const angle = core.range(section, { label: "鏡の向き（反射先）", min: 35, max: 145, value: state.angle, format: value => value + "°", onInput: value => { state.angle = value; draw(); } });
+    const mirrors = core.options(section, { label: "同じ場所へ向ける鏡", values: [option("1", "1枚"), option("2", "2枚"), option("3", "3枚")], value: String(state.mirrors), format: item => item.label, onChange: value => { state.mirrors = Number(value); draw(); } });
     function draw() {
-      const targetX = 355 + (state.angle - 90) * 2.15;
-      const brightness = Math.round(clamp(42 + state.mirrors * 19 - Math.abs(state.angle - 90) * .12, 0, 100));
-      const repeated = Array.from({ length: state.mirrors }, (_, i) => '<line class="light-ray" style="--ray-delay:' + (i * .08) + 's" x1="255" y1="' + (160 + i * 35) + '" x2="' + targetX + '" y2="' + (95 + i * 50) + '" stroke="#e4aa31" stroke-width="6" opacity=".78"/>').join("");
+      const sourceX = 82, sourceY = 188, mirrorX = 282, wallX = 570;
+      const targetY = Math.round(270 - ((state.angle - 35) / 110) * 180);
+      const targetZone = targetY < 145 ? "上" : targetY > 215 ? "下" : "中央";
+      const mirrorYs = state.mirrors === 1 ? [188] : state.mirrors === 2 ? [158, 218] : [132, 188, 244];
+      const brightness = 32 + state.mirrors * 22;
+      const paths = mirrorYs.map((my, index) => {
+        const inX = mirrorX - sourceX, inY = my - sourceY;
+        const inLength = Math.hypot(inX, inY) || 1;
+        const dX = inX / inLength, dY = inY / inLength;
+        const outX = wallX - mirrorX, outY = targetY - my;
+        const outLength = Math.hypot(outX, outY) || 1;
+        const rX = outX / outLength, rY = outY / outLength;
+        let nX = -dX + rX, nY = -dY + rY;
+        const nLength = Math.hypot(nX, nY) || 1;
+        nX /= nLength; nY /= nLength;
+        const tX = -nY, tY = nX;
+        const half = 32;
+        const x1 = mirrorX - tX * half, y1 = my - tY * half;
+        const x2 = mirrorX + tX * half, y2 = my + tY * half;
+        const normal = index === 0 ? '<line x1="' + (mirrorX - nX * 46) + '" y1="' + (my - nY * 46) + '" x2="' + (mirrorX + nX * 46) + '" y2="' + (my + nY * 46) + '" stroke="#74888d" stroke-width="2" stroke-dasharray="5 5"/><text x="' + (mirrorX + nX * 50 - 18) + '" y="' + (my + nY * 50 - 5) + '" class="tiny-label">鏡に直角</text>' : "";
+        return '<g><line class="light-ray" style="--ray-delay:' + (index * .07) + 's" x1="' + (sourceX + 35) + '" y1="' + sourceY + '" x2="' + (mirrorX - dX * 7) + '" y2="' + (my - dY * 7) + '" stroke="#f0b72f" stroke-width="6" marker-end="url(#rayArrow)"/><line class="light-ray" style="--ray-delay:' + ((index + 1) * .07) + 's" x1="' + (mirrorX + rX * 7) + '" y1="' + (my + rY * 7) + '" x2="' + (wallX - 12) + '" y2="' + (targetY - rY * 3) + '" stroke="#f5c94b" stroke-width="6" marker-end="url(#rayArrow)"/>' + normal + '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#607b83" stroke-width="13" stroke-linecap="round"/><line x1="' + (x1 + nX * 4) + '" y1="' + (y1 + nY * 4) + '" x2="' + (x2 + nX * 4) + '" y2="' + (y2 + nY * 4) + '" stroke="#d8eef2" stroke-width="7" stroke-linecap="round"/><circle cx="' + mirrorX + '" cy="' + my + '" r="5" fill="#fff"/></g>';
+      }).join("");
+      const rings = Array.from({ length: state.mirrors }, (_, i) => '<circle cx="' + wallX + '" cy="' + targetY + '" r="' + (17 + i * 8) + '" fill="none" stroke="#f7d75a" stroke-width="4" opacity="' + (.7 - i * .16) + '"/>').join("");
       view.stage.innerHTML =
-        '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="鏡の向きと反射した光のシミュレーション">' +
-          '<rect width="640" height="360" fill="#fffbea"/><circle cx="78" cy="160" r="28" fill="#f4c84d"/><text x="28" y="42" class="scene-title">鏡の向きで、光の先は？</text><text x="30" y="80" class="scene-caption">鏡の向き ' + state.angle + '°・' + state.mirrors + '枚</text>' +
-          '<path class="light-ray" d="M105 160 H255" stroke="#e4aa31" stroke-width="7"/><rect class="sim-mirror" x="246" y="105" width="16" height="150" rx="7" transform="rotate(' + (state.angle - 90) + ' 254 180)" fill="#bad0d4" stroke="#6b8790" stroke-width="4"/>' + repeated +
-          '<circle class="light-spot" cx="' + targetX + '" cy="' + (95 + (state.mirrors - 1) * 50) + '" r="' + (10 + brightness / 8) + '" fill="#f7d75a" opacity=".9"/><text x="100" y="320" class="component-label">入ってくる光</text><text x="415" y="320" class="component-label">当たった場所・明るさ ' + brightness + '</text>' +
+        '<svg class="extra-svg light-lab-svg" viewBox="0 0 640 360" role="img" aria-label="懐中電灯の光が鏡ではね返り壁へ届く道すじ">' +
+          '<defs><marker id="rayArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#d99a16"/></marker><radialGradient id="lightSpot"><stop offset="0" stop-color="#fff9ba" stop-opacity="1"/><stop offset=".55" stop-color="#f8dc60" stop-opacity=".8"/><stop offset="1" stop-color="#f8dc60" stop-opacity="0"/></radialGradient></defs>' +
+          '<rect width="640" height="360" fill="#fffbea"/><text x="28" y="38" class="scene-title">光の道すじを線でたどろう</text><text x="30" y="72" class="scene-caption">鏡 ' + state.mirrors + '枚 → 壁の' + targetZone + 'に届く</text>' +
+          '<rect x="564" y="82" width="24" height="210" rx="6" fill="#e8e0cf" stroke="#9c8f79" stroke-width="3"/><path d="M590 82 V292" stroke="#c9bda6" stroke-width="2"/>' +
+          '<g transform="translate(45 164)"><rect width="58" height="48" rx="12" fill="#486a75"/><path d="M57 8 L86 15 V33 L57 40Z" fill="#79939b"/><circle cx="18" cy="24" r="7" fill="#d5eef2"/></g>' +
+          paths + '<circle class="light-spot" cx="' + wallX + '" cy="' + targetY + '" r="' + (25 + state.mirrors * 5) + '" fill="url(#lightSpot)"/>' + rings +
+          '<g class="diagram-key"><rect x="32" y="300" width="576" height="42" rx="12" fill="#fff" opacity=".93"/><text x="50" y="326" class="component-label">① 光を出す</text><text x="185" y="326" class="component-label">② 鏡に当たる</text><text x="335" y="326" class="component-label">③ はね返る</text><text x="475" y="326" class="component-label">④ 壁に届く</text></g>' +
         '</svg>';
       core.renderReadout(view.readout, {
         metrics: [
-          { label: "反射した光", value: "向きが変わる", detail: state.angle + "°の鏡" },
-          { label: "明るさ", value: brightness + " / 100", detail: state.mirrors + "枚の光を重ねたモデル" }
+          { label: "光が届く場所", value: "壁の" + targetZone, detail: "鏡の向きを変えると上下に動く" },
+          { label: "光の重なり", value: state.mirrors + "本", detail: "同じ場所で明るさ " + brightness + " / 100" }
         ],
-        message: state.mirrors > 1 ? "光を同じ場所へ重ねると、明るさが大きくなるね。鏡の向きで進む先も変わるよ。" : "鏡の向きを少しずつ変えて、反射した光の当たる場所を比べてみよう。"
+        message: "光はまっすぐ進み、鏡に当たるとはね返ります。鏡の向きを変えると、はね返った光の進む先が変わります。"
       });
-      view.setTrial({ condition: "鏡 " + state.mirrors + "枚・向き " + state.angle + "°", result: "明るさ " + brightness + " / 100" });
+      view.setTrial({ condition: "鏡 " + state.mirrors + "枚・向き " + state.angle + "°", result: "壁の" + targetZone + "・明るさ " + brightness + " / 100" });
     }
     return {
       render: draw,
@@ -277,27 +300,32 @@
   function electricity(view, core) {
     const state = { material: "copper", closed: "closed" };
     const materials = { copper: { label:"銅", color:"#c98b55", conducts:true }, iron: { label:"鉄", color:"#a2abb0", conducts:true }, aluminum: { label:"アルミ", color:"#c8d0d3", conducts:true }, plastic: { label:"プラスチック", color:"#d4a6a0", conducts:false }, rubber: { label:"ゴム", color:"#59656a", conducts:false }, wood: { label:"木", color:"#b88d57", conducts:false } };
-    const section = core.section(view.panel, "回路の条件を変える", "つながりと材料を変えて、豆電球を確かめよう。");
+    const section = core.section(view.panel, "回路の条件を変える", "線を一周たどり、切れ目がないか確かめよう。");
     const material = core.options(section, { label: "回路の途中", values: Object.entries(materials).map(([id, item]) => option(id, item.label)), value: state.material, format: item => item.label, onChange: value => { state.material = value; draw(); } });
-    const closed = core.options(section, { label: "回路", values: [option("closed", "つながる"), option("open", "切れている")], value: state.closed, format: item => item.label, onChange: value => { state.closed = value; draw(); } });
+    const closed = core.options(section, { label: "スイッチ", values: [option("closed", "つなぐ"), option("open", "切る")], value: state.closed, format: item => item.label, onChange: value => { state.closed = value; draw(); } });
     function draw() {
       const tested = materials[state.material];
       const lit = state.closed === "closed" && tested.conducts;
-      const glow = lit ? '<circle class="bulb-glow" cx="500" cy="155" r="44" fill="#f7d75a" opacity=".35"/>' : "";
+      const wireColor = lit ? "#d59620" : "#718a91";
+      const switchPart = state.closed === "closed" ? '<line x1="300" y1="274" x2="360" y2="274" stroke="' + wireColor + '" stroke-width="8" stroke-linecap="round"/>' : '<line x1="300" y1="274" x2="350" y2="242" stroke="#718a91" stroke-width="8" stroke-linecap="round"/>';
+      const flowMarks = lit ? [[130,115],[340,115],[510,220],[420,274],[210,274]].map((p,i) => '<circle class="circuit-charge" style="--charge-delay:' + (i*.12) + 's" cx="' + p[0] + '" cy="' + p[1] + '" r="6" fill="#f6c846"/>').join("") : "";
       view.stage.innerHTML =
-        '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="電気の通り道と豆電球のシミュレーション">' +
-          '<rect width="640" height="360" fill="#fffaf0"/><text x="28" y="42" class="scene-title">電気の通り道をつなごう</text><text x="30" y="80" class="scene-caption">' + (state.closed === "closed" ? "回路はつながっている" : "回路は切れている") + "・" + tested.label + '</text>' +
-          '<path class="circuit-path ' + (lit ? "is-lit" : "") + '" d="M90 150 H180 M270 150 H465 V245 H90 V150" fill="none" stroke="' + (lit ? "#d39d29" : "#81979a") + '" stroke-width="7" stroke-linecap="round"/><rect class="tested-material" x="180" y="125" width="90" height="50" rx="8" fill="' + tested.color + '"/><text x="196" y="157" class="component-label">' + tested.label + '</text><circle class="sim-bulb ' + (lit ? "is-lit" : "") + '" cx="500" cy="155" r="25" fill="' + (lit ? "#fff2a1" : "#e5e9e6") + '" stroke="#82756b" stroke-width="5"/>' + glow +
-          '<text x="450" y="295" class="component-label">' + (lit ? "豆電球がつく" : "豆電球はつかない") + '</text><text x="92" y="295" class="component-label">乾電池</text>' +
+        '<svg class="extra-svg circuit-diagram" viewBox="0 0 640 360" role="img" aria-label="乾電池、調べる物、豆電球、スイッチが一つの輪につながった回路">' +
+          '<defs><radialGradient id="bulbLight"><stop offset="0" stop-color="#fff8a6" stop-opacity=".95"/><stop offset="1" stop-color="#f7d75a" stop-opacity="0"/></radialGradient></defs><rect width="640" height="360" fill="#fffaf0"/><text x="28" y="38" class="scene-title">電気の通り道を一周たどろう</text><text x="30" y="74" class="scene-caption">' + (lit ? "切れ目のない一つの輪 → 豆電球がつく" : state.closed === "open" ? "スイッチに切れ目がある" : tested.label + "は電気を通さない") + '</text>' +
+          '<path d="M105 245 V115 H190 M270 115 H505 V235 H360 M300 274 H145" fill="none" stroke="' + wireColor + '" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>' +
+          '<g><circle cx="190" cy="115" r="10" fill="#d9e1df" stroke="#60777d" stroke-width="3"/><circle cx="270" cy="115" r="10" fill="#d9e1df" stroke="#60777d" stroke-width="3"/><rect x="190" y="94" width="80" height="42" rx="8" fill="' + tested.color + '" stroke="#6e7776" stroke-width="3"/><text x="205" y="121" class="component-label">' + tested.label + '</text><text x="180" y="157" class="tiny-label">調べる物</text></g>' +
+          '<g><rect x="85" y="225" width="60" height="74" rx="8" fill="#f0d36c" stroke="#8d7225" stroke-width="3"/><line x1="96" y1="245" x2="134" y2="245" stroke="#705b1d" stroke-width="5"/><line x1="103" y1="274" x2="127" y2="274" stroke="#705b1d" stroke-width="3"/><text x="74" y="322" class="component-label">乾電池 ＋／−</text></g>' +
+          '<g><circle cx="505" cy="180" r="34" fill="' + (lit ? "#fff4a4" : "#eef0e9") + '" stroke="#7e7468" stroke-width="5"/><path d="M487 184 Q505 153 523 184 M493 188 H517" fill="none" stroke="' + (lit ? "#d88917" : "#999") + '" stroke-width="4"/><rect x="488" y="212" width="34" height="24" rx="4" fill="#9a9c96"/>' + (lit ? '<circle class="bulb-glow" cx="505" cy="180" r="64" fill="url(#bulbLight)"/>' : "") + '<text x="468" y="259" class="component-label">豆電球</text></g>' +
+          '<g><circle cx="300" cy="274" r="9" fill="#d9e1df" stroke="#60777d" stroke-width="3"/><circle cx="360" cy="274" r="9" fill="#d9e1df" stroke="#60777d" stroke-width="3"/>' + switchPart + '<text x="300" y="318" class="component-label">スイッチ：' + (state.closed === "closed" ? "つながる" : "切れ目") + '</text></g>' + flowMarks +
         '</svg>';
       core.renderReadout(view.readout, {
         metrics: [
-          { label: "回路", value: state.closed === "closed" ? "一つの輪" : "切れ目あり", detail: "電気の通り道" },
+          { label: "通り道", value: state.closed === "closed" ? "スイッチはつながる" : "スイッチに切れ目", detail: "乾電池から一周たどる" },
           { label: tested.label, value: tested.conducts ? "電気を通す" : "電気を通さない", detail: lit ? "豆電球がつく" : "豆電球はつかない" }
         ],
-        message: lit ? "回路が切れ目なくつながり、途中の金属が電気を通すと豆電球がつくね。" : "つながりか材料のどちらかを変えて、豆電球がつく条件を探そう。"
+        message: lit ? "切れ目のない一つの輪になり、途中の物も電気を通すので、豆電球がつきます。" : "青灰色の線を一周たどって、切れ目か、電気を通さない物を見つけよう。"
       });
-      view.setTrial({ condition: (state.closed === "closed" ? "回路がつながる" : "回路に切れ目") + "・" + tested.label, result: lit ? "豆電球がつく" : "豆電球はつかない" });
+      view.setTrial({ condition: (state.closed === "closed" ? "スイッチをつなぐ" : "スイッチを切る") + "・" + tested.label, result: lit ? "豆電球がつく" : "豆電球はつかない" });
     }
     return {
       render: draw,
