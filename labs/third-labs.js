@@ -33,12 +33,12 @@
       const bugMarks = Array.from({ length: bugs }, (_, i) => {
         const x = 125 + (i * 57) % 380;
         const y = 270 - (i % 3) * 23;
-        return '<g><circle cx="' + x + '" cy="' + y + '" r="8" fill="#7b574c"/><circle cx="' + (x - 7) + '" cy="' + (y - 5) + '" r="5" fill="#b98358"/><circle cx="' + (x + 7) + '" cy="' + (y - 5) + '" r="5" fill="#b98358"/></g>';
+        return '<g class="sim-bug" style="--bug-delay:' + (i * .09) + 's"><circle cx="' + x + '" cy="' + y + '" r="8" fill="#7b574c"/><circle cx="' + (x - 7) + '" cy="' + (y - 5) + '" r="5" fill="#b98358"/><circle cx="' + (x + 7) + '" cy="' + (y - 5) + '" r="5" fill="#b98358"/></g>';
       }).join("");
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="すみかの条件と生き物の見つかりやすさのシミュレーション">' +
           '<rect width="640" height="360" fill="#edf7ee"/><rect y="270" width="640" height="90" fill="' + (state.moisture === "moist" ? "#a9c88b" : "#d9c28e") + '"/>' +
-          '<circle cx="540" cy="66" r="31" fill="' + (state.light === "sun" ? "#f4c84d" : "#dce7d9") + '"/><text x="28" y="42" class="scene-title">場所を変えると、何が見つかる？</text>' +
+          '<circle class="sim-sun-glow" cx="540" cy="66" r="31" fill="' + (state.light === "sun" ? "#f4c84d" : "#dce7d9") + '"/><text x="28" y="42" class="scene-title">場所を変えると、何が見つかる？</text>' +
           '<text x="30" y="80" class="scene-caption">' + (state.light === "sun" ? "日なた" : "日かげ") + '・' + (state.moisture === "moist" ? "しめった地面" : "乾いた地面") + '</text>' +
           '<path d="M105 270 Q150 170 205 270 M175 270 Q220 145 265 270 M255 270 Q305 185 355 270" fill="none" stroke="#4f934b" stroke-width="12" stroke-linecap="round"/>' +
           '<path d="M0 245 Q130 220 260 245 T520 240 T640 248" fill="none" stroke="#7d9e62" stroke-width="4"/>' + bugMarks +
@@ -74,14 +74,14 @@
       const leafMarks = Array.from({ length: leaves }, (_, i) => {
         const x = 318 + (i % 2 ? 28 : -28);
         const y = 260 - i * 19;
-        return '<ellipse cx="' + x + '" cy="' + y + '" rx="27" ry="12" transform="rotate(' + (i % 2 ? 24 : -24) + ' ' + x + ' ' + y + ')" fill="#4f934b"/>';
+        return '<ellipse class="sim-plant-leaf" style="--leaf-delay:' + (i * .045) + 's" cx="' + x + '" cy="' + y + '" rx="27" ry="12" transform="rotate(' + (i % 2 ? 24 : -24) + ' ' + x + ' ' + y + ')" fill="#4f934b"/>';
       }).join("");
-      const flower = growth > .82 ? '<circle cx="318" cy="82" r="13" fill="#e693a5"/><circle cx="335" cy="88" r="11" fill="#e693a5"/><circle cx="325" cy="72" r="10" fill="#e693a5"/><circle cx="325" cy="84" r="5" fill="#f1c74e"/>' : "";
+      const flower = growth > .82 ? '<g class="sim-flower"><circle cx="318" cy="82" r="13" fill="#e693a5"/><circle cx="335" cy="88" r="11" fill="#e693a5"/><circle cx="325" cy="72" r="10" fill="#e693a5"/><circle cx="325" cy="84" r="5" fill="#f1c74e"/></g>' : "";
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="植物の育ちのシミュレーション">' +
-          '<rect width="640" height="360" fill="#f2faed"/><rect y="274" width="640" height="86" fill="#b99a72"/><circle cx="535" cy="65" r="32" fill="' + (state.sunlight === "sun" ? "#f5cb54" : "#ced9cd") + '"/>' +
+          '<rect width="640" height="360" fill="#f2faed"/><rect y="274" width="640" height="86" fill="#b99a72"/><circle class="sim-sun-glow" cx="535" cy="65" r="32" fill="' + (state.sunlight === "sun" ? "#f5cb54" : "#ced9cd") + '"/>' +
           '<text x="28" y="42" class="scene-title">条件を変えると、植物の育ちは？</text><text x="30" y="80" class="scene-caption">' + state.day + "日目・水：" + (state.water === "enough" ? "適量" : state.water === "none" ? "なし" : "多すぎ") + "・日光：" + (state.sunlight === "sun" ? "あり" : "なし") + '</text>' +
-          '<path d="M318 274 V' + (274 - height) + '" stroke="#4f934b" stroke-width="12" stroke-linecap="round"/>' + leafMarks + flower +
+          '<path class="sim-plant-stem" d="M318 274 V' + (274 - height) + '" stroke="#4f934b" stroke-width="12" stroke-linecap="round"/>' + leafMarks + flower +
           '<text x="105" y="330" class="component-label">芽 → 葉 → 花</text><text x="430" y="330" class="component-label">成長 ' + Math.round(growth * 100) + '%</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
@@ -122,7 +122,7 @@
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="昆虫の育ち方と体のつくりのシミュレーション">' +
           '<rect width="640" height="360" fill="#fff7ed"/><text x="28" y="42" class="scene-title">育ちの順序と体のつくり</text><text x="30" y="80" class="scene-caption">' + (state.kind === "butterfly" ? "チョウ" : "バッタ") + "：" + name + '</text>' +
-          (state.kind === "butterfly" ? '<path d="M100 285 H540" stroke="#c4a56e" stroke-width="4" stroke-dasharray="8 9"/><circle cx="130" cy="285" r="14" fill="#e7d28f"/><circle cx="280" cy="285" r="14" fill="#78b86b"/><circle cx="410" cy="285" r="14" fill="#9c8561"/><circle cx="520" cy="285" r="14" fill="#e9b8d0"/><text x="112" y="320" class="component-label">卵</text><text x="255" y="320" class="component-label">幼虫</text><text x="370" y="320" class="component-label">さなぎ</text><text x="495" y="320" class="component-label">成虫</text>' : '<path d="M120 285 H520" stroke="#c4a56e" stroke-width="4" stroke-dasharray="8 9"/><circle cx="150" cy="285" r="14" fill="#e7d28f"/><circle cx="320" cy="285" r="14" fill="#78b86b"/><circle cx="500" cy="285" r="14" fill="#91b86d"/><text x="132" y="320" class="component-label">卵</text><text x="295" y="320" class="component-label">幼虫</text><text x="475" y="320" class="component-label">成虫</text>') + figure +
+          (state.kind === "butterfly" ? '<path d="M100 285 H540" stroke="#c4a56e" stroke-width="4" stroke-dasharray="8 9"/><circle cx="130" cy="285" r="14" fill="#e7d28f"/><circle cx="280" cy="285" r="14" fill="#78b86b"/><circle cx="410" cy="285" r="14" fill="#9c8561"/><circle cx="520" cy="285" r="14" fill="#e9b8d0"/><text x="112" y="320" class="component-label">卵</text><text x="255" y="320" class="component-label">幼虫</text><text x="370" y="320" class="component-label">さなぎ</text><text x="495" y="320" class="component-label">成虫</text>' : '<path d="M120 285 H520" stroke="#c4a56e" stroke-width="4" stroke-dasharray="8 9"/><circle cx="150" cy="285" r="14" fill="#e7d28f"/><circle cx="320" cy="285" r="14" fill="#78b86b"/><circle cx="500" cy="285" r="14" fill="#91b86d"/><text x="132" y="320" class="component-label">卵</text><text x="295" y="320" class="component-label">幼虫</text><text x="475" y="320" class="component-label">成虫</text>') + '<g class="life-stage-figure">' + figure + '</g>' +
           '<text x="410" y="120" class="component-label">' + bodyText + '</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
@@ -149,11 +149,11 @@
     function draw() {
       const distance = Math.round(state.force * 2.45);
       const carX = 92 + distance * 1.65;
-      const arrows = state.source === "wind" ? '<path d="M105 150 H250 M130 125 H300 M170 175 H330" stroke="#5aa6b4" stroke-width="9" stroke-linecap="round"/><path d="M240 140 l25 10 -25 10 M290 115 l25 10 -25 10 M320 165 l25 10 -25 10" fill="none" stroke="#327b8b" stroke-width="6"/>' : '<path d="M110 150 Q165 110 220 150 T330 150" fill="none" stroke="#bd5550" stroke-width="7"/><path d="M110 150 H' + (110 + state.force * .8) + '" stroke="#bd5550" stroke-width="5"/>';
+      const arrows = state.source === "wind" ? '<path class="force-arrow" d="M105 150 H250 M130 125 H300 M170 175 H330" stroke="#5aa6b4" stroke-width="9" stroke-linecap="round"/><path class="force-arrow" d="M240 140 l25 10 -25 10 M290 115 l25 10 -25 10 M320 165 l25 10 -25 10" fill="none" stroke="#327b8b" stroke-width="6"/>' : '<path class="rubber-stretch" d="M110 150 Q165 110 220 150 T330 150" fill="none" stroke="#bd5550" stroke-width="7"/><path class="force-arrow" d="M110 150 H' + (110 + state.force * .8) + '" stroke="#bd5550" stroke-width="5"/>';
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="風やゴムの力と車の移動距離のシミュレーション">' +
           '<rect width="640" height="360" fill="#eef8fa"/><text x="28" y="42" class="scene-title">力を大きくすると、車は？</text><text x="30" y="80" class="scene-caption">' + (state.source === "wind" ? "風の強さ" : "ゴムの伸び") + " " + state.force + '%</text>' + arrows +
-          '<path d="M70 270 H570" stroke="#78949a" stroke-width="5"/><path d="M70 287 H570" stroke="#c5d9d9" stroke-width="2"/><rect x="' + carX + '" y="230" width="72" height="35" rx="10" fill="#27849b"/><circle cx="' + (carX + 16) + '" cy="270" r="12" fill="#4b5c62"/><circle cx="' + (carX + 57) + '" cy="270" r="12" fill="#4b5c62"/><text x="80" y="320" class="component-label">0cm</text><text x="490" y="320" class="component-label">250cm</text><line x1="92" y1="305" x2="' + (92 + distance * 1.65) + '" y2="305" stroke="#27849b" stroke-width="6"/>' +
+          '<path d="M70 270 H570" stroke="#78949a" stroke-width="5"/><path d="M70 287 H570" stroke="#c5d9d9" stroke-width="2"/><g class="sim-car"><rect x="' + carX + '" y="230" width="72" height="35" rx="10" fill="#27849b"/><circle cx="' + (carX + 16) + '" cy="270" r="12" fill="#4b5c62"/><circle cx="' + (carX + 57) + '" cy="270" r="12" fill="#4b5c62"/></g><text x="80" y="320" class="component-label">0cm</text><text x="490" y="320" class="component-label">250cm</text><line class="distance-line" x1="92" y1="305" x2="' + (92 + distance * 1.65) + '" y2="305" stroke="#27849b" stroke-width="6"/>' +
         '</svg>';
       core.renderReadout(view.readout, {
         metrics: [
@@ -189,8 +189,8 @@
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="音の大きさとふるえのシミュレーション">' +
           '<rect width="640" height="360" fill="#f7f1fb"/><text x="28" y="42" class="scene-title">音が大きいと、ふるえは？</text><text x="30" y="80" class="scene-caption">' + (state.medium === "rubber" ? "輪ゴム" : "太鼓") + "・強さ " + state.strength + '%</text>' +
-          '<path d="' + wave + '" fill="none" stroke="#8a64a7" stroke-width="7" stroke-linecap="round"/><line x1="115" y1="175" x2="500" y2="175" stroke="#c7b6d5" stroke-width="2" stroke-dasharray="6 7"/>' +
-          '<circle cx="535" cy="175" r="' + (18 + transmission * .18) + '" fill="#e5c8ee" stroke="#8a64a7" stroke-width="4"/><path d="M570 140 Q620 175 570 210 M590 125 Q650 175 590 225" fill="none" stroke="#8a64a7" stroke-width="5" opacity="' + (transmission / 100) + '"/><text x="110" y="280" class="component-label">音を出す物のふるえ：' + vibration + ' / 100</text><text x="405" y="320" class="component-label">糸で伝わる強さ：' + transmission + '</text>' +
+          '<path class="sound-wave" d="' + wave + '" fill="none" stroke="#8a64a7" stroke-width="7" stroke-linecap="round"/><line x1="115" y1="175" x2="500" y2="175" stroke="#c7b6d5" stroke-width="2" stroke-dasharray="6 7"/>' +
+          '<circle class="sound-receiver" cx="535" cy="175" r="' + (18 + transmission * .18) + '" fill="#e5c8ee" stroke="#8a64a7" stroke-width="4"/><path class="sound-rings" d="M570 140 Q620 175 570 210 M590 125 Q650 175 590 225" fill="none" stroke="#8a64a7" stroke-width="5" opacity="' + (transmission / 100) + '"/><text x="110" y="280" class="component-label">音を出す物のふるえ：' + vibration + ' / 100</text><text x="405" y="320" class="component-label">糸で伝わる強さ：' + transmission + '</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
         metrics: [
@@ -224,8 +224,8 @@
       const shadowSide = state.time < 12 ? "西がわ" : state.time > 12 ? "東がわ" : "短い影";
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="太陽の位置と影のシミュレーション">' +
-          '<rect width="640" height="360" fill="#fff7e8"/><rect y="280" width="640" height="80" fill="#d6c38d"/><circle cx="' + sunX + '" cy="' + (270 - height) + '" r="28" fill="#f5c84d"/><text x="28" y="42" class="scene-title">太陽の位置が変わると、影は？</text><text x="30" y="80" class="scene-caption">' + state.time + "時ごろ・" + (state.target === "shadow" ? "影に注目" : "地面の温度に注目") + '</text><text x="72" y="118" class="component-label">東</text><text x="548" y="118" class="component-label">西</text>' +
-          '<rect x="322" y="180" width="16" height="100" fill="#806d51"/><path d="M330 280 L' + shadowEnd + ' 280 L' + (shadowEnd - shadowDirection * 10) + ' 270 Z" fill="#8e836d" opacity=".75"/><text x="105" y="320" class="component-label">影：' + shadowSide + '・' + shadowLength + 'cm</text><text x="430" y="320" class="component-label">日なたの地面 ' + temp + '℃</text>' +
+          '<rect width="640" height="360" fill="#fff7e8"/><rect y="280" width="640" height="80" fill="#d6c38d"/><circle class="moving-sun" cx="' + sunX + '" cy="' + (270 - height) + '" r="28" fill="#f5c84d"/><text x="28" y="42" class="scene-title">太陽の位置が変わると、影は？</text><text x="30" y="80" class="scene-caption">' + state.time + "時ごろ・" + (state.target === "shadow" ? "影に注目" : "地面の温度に注目") + '</text><text x="72" y="118" class="component-label">東</text><text x="548" y="118" class="component-label">西</text>' +
+          '<rect x="322" y="180" width="16" height="100" fill="#806d51"/><path class="moving-shadow" d="M330 280 L' + shadowEnd + ' 280 L' + (shadowEnd - shadowDirection * 10) + ' 270 Z" fill="#8e836d" opacity=".75"/><text x="105" y="320" class="component-label">影：' + shadowSide + '・' + shadowLength + 'cm</text><text x="430" y="320" class="component-label">日なたの地面 ' + temp + '℃</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
         metrics: [
@@ -251,12 +251,12 @@
     function draw() {
       const targetX = 355 + (state.angle - 90) * 2.15;
       const brightness = Math.round(clamp(42 + state.mirrors * 19 - Math.abs(state.angle - 90) * .12, 0, 100));
-      const repeated = Array.from({ length: state.mirrors }, (_, i) => '<line x1="255" y1="' + (160 + i * 35) + '" x2="' + targetX + '" y2="' + (95 + i * 50) + '" stroke="#e4aa31" stroke-width="6" opacity=".78"/>').join("");
+      const repeated = Array.from({ length: state.mirrors }, (_, i) => '<line class="light-ray" style="--ray-delay:' + (i * .08) + 's" x1="255" y1="' + (160 + i * 35) + '" x2="' + targetX + '" y2="' + (95 + i * 50) + '" stroke="#e4aa31" stroke-width="6" opacity=".78"/>').join("");
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="鏡の向きと反射した光のシミュレーション">' +
           '<rect width="640" height="360" fill="#fffbea"/><circle cx="78" cy="160" r="28" fill="#f4c84d"/><text x="28" y="42" class="scene-title">鏡の向きで、光の先は？</text><text x="30" y="80" class="scene-caption">鏡の向き ' + state.angle + '°・' + state.mirrors + '枚</text>' +
-          '<path d="M105 160 H255" stroke="#e4aa31" stroke-width="7"/><rect x="246" y="105" width="16" height="150" rx="7" transform="rotate(' + (state.angle - 90) + ' 254 180)" fill="#bad0d4" stroke="#6b8790" stroke-width="4"/>' + repeated +
-          '<circle cx="' + targetX + '" cy="' + (95 + (state.mirrors - 1) * 50) + '" r="' + (10 + brightness / 8) + '" fill="#f7d75a" opacity=".9"/><text x="100" y="320" class="component-label">入ってくる光</text><text x="415" y="320" class="component-label">当たった場所・明るさ ' + brightness + '</text>' +
+          '<path class="light-ray" d="M105 160 H255" stroke="#e4aa31" stroke-width="7"/><rect class="sim-mirror" x="246" y="105" width="16" height="150" rx="7" transform="rotate(' + (state.angle - 90) + ' 254 180)" fill="#bad0d4" stroke="#6b8790" stroke-width="4"/>' + repeated +
+          '<circle class="light-spot" cx="' + targetX + '" cy="' + (95 + (state.mirrors - 1) * 50) + '" r="' + (10 + brightness / 8) + '" fill="#f7d75a" opacity=".9"/><text x="100" y="320" class="component-label">入ってくる光</text><text x="415" y="320" class="component-label">当たった場所・明るさ ' + brightness + '</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
         metrics: [
@@ -283,11 +283,11 @@
     function draw() {
       const tested = materials[state.material];
       const lit = state.closed === "closed" && tested.conducts;
-      const glow = lit ? '<circle cx="500" cy="155" r="44" fill="#f7d75a" opacity=".35"/>' : "";
+      const glow = lit ? '<circle class="bulb-glow" cx="500" cy="155" r="44" fill="#f7d75a" opacity=".35"/>' : "";
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="電気の通り道と豆電球のシミュレーション">' +
           '<rect width="640" height="360" fill="#fffaf0"/><text x="28" y="42" class="scene-title">電気の通り道をつなごう</text><text x="30" y="80" class="scene-caption">' + (state.closed === "closed" ? "回路はつながっている" : "回路は切れている") + "・" + tested.label + '</text>' +
-          '<path d="M90 150 H180 M270 150 H465 V245 H90 V150" fill="none" stroke="' + (lit ? "#d39d29" : "#81979a") + '" stroke-width="7" stroke-linecap="round"/><rect x="180" y="125" width="90" height="50" rx="8" fill="' + tested.color + '"/><text x="196" y="157" class="component-label">' + tested.label + '</text><circle cx="500" cy="155" r="25" fill="' + (lit ? "#fff2a1" : "#e5e9e6") + '" stroke="#82756b" stroke-width="5"/>' + glow +
+          '<path class="circuit-path ' + (lit ? "is-lit" : "") + '" d="M90 150 H180 M270 150 H465 V245 H90 V150" fill="none" stroke="' + (lit ? "#d39d29" : "#81979a") + '" stroke-width="7" stroke-linecap="round"/><rect class="tested-material" x="180" y="125" width="90" height="50" rx="8" fill="' + tested.color + '"/><text x="196" y="157" class="component-label">' + tested.label + '</text><circle class="sim-bulb ' + (lit ? "is-lit" : "") + '" cx="500" cy="155" r="25" fill="' + (lit ? "#fff2a1" : "#e5e9e6") + '" stroke="#82756b" stroke-width="5"/>' + glow +
           '<text x="450" y="295" class="component-label">' + (lit ? "豆電球がつく" : "豆電球はつかない") + '</text><text x="92" y="295" class="component-label">乾電池</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
@@ -322,8 +322,8 @@
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="磁石の極と材料による動きのシミュレーション">' +
           '<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#bd5550"/></marker></defs><rect width="640" height="360" fill="#fff1f0"/><text x="28" y="42" class="scene-title">磁石を近づけると、どう動く？</text><text x="30" y="80" class="scene-caption">' + state.poleA + "極と" + state.poleB + "極・距離 " + state.distance + "cm</text>" +
-          '<rect x="170" y="105" width="110" height="60" rx="12" fill="' + (state.poleA === "N" ? "#db6d67" : "#668bc0") + '"/><text x="216" y="143" fill="#fff" class="component-label">' + state.poleA + '</text><rect x="' + rightX + '" y="105" width="110" height="60" rx="12" fill="' + (state.poleB === "N" ? "#db6d67" : "#668bc0") + '"/><text x="' + (rightX + 46) + '" y="143" fill="#fff" class="component-label">' + state.poleB + '</text>' + arrow +
-          '<circle cx="320" cy="250" r="28" fill="' + (state.material === "iron" ? "#a2abb0" : "#d3c2a0") + '" stroke="#6f7779" stroke-width="4"/><text x="300" y="310" class="component-label">' + (state.material === "iron" ? "鉄" : "アルミ") + "：" + (state.material === "iron" ? "つく" : "つかない") + '</text>' +
+          '<g class="magnet-left ' + (opposite ? "attract" : "repel") + '"><rect x="170" y="105" width="110" height="60" rx="12" fill="' + (state.poleA === "N" ? "#db6d67" : "#668bc0") + '"/><text x="216" y="143" fill="#fff" class="component-label">' + state.poleA + '</text></g><g class="magnet-right ' + (opposite ? "attract" : "repel") + '"><rect x="' + rightX + '" y="105" width="110" height="60" rx="12" fill="' + (state.poleB === "N" ? "#db6d67" : "#668bc0") + '"/><text x="' + (rightX + 46) + '" y="143" fill="#fff" class="component-label">' + state.poleB + '</text></g>' + arrow +
+          '<circle class="magnet-test-object ' + (state.material === "iron" ? "sticks" : "") + '" cx="320" cy="250" r="28" fill="' + (state.material === "iron" ? "#a2abb0" : "#d3c2a0") + '" stroke="#6f7779" stroke-width="4"/><text x="300" y="310" class="component-label">' + (state.material === "iron" ? "鉄" : "アルミ") + "：" + (state.material === "iron" ? "つく" : "つかない") + '</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
         metrics: [
@@ -350,7 +350,7 @@
     function draw() {
       const density = { clay: 100, wood: 55, iron: 260 }[state.material];
       const weightValue = state.amount * density;
-      const object = state.shape === "round" ? '<circle cx="320" cy="185" r="58" fill="' + ({clay:"#c98268",wood:"#b88d57",iron:"#9ca7ac"}[state.material]) + '" stroke="#6c777b" stroke-width="4"/>' : '<rect x="245" y="145" width="150" height="80" rx="10" fill="' + ({clay:"#c98268",wood:"#b88d57",iron:"#9ca7ac"}[state.material]) + '" stroke="#6c777b" stroke-width="4"/>';
+      const object = state.shape === "round" ? '<circle class="weight-object" cx="320" cy="185" r="58" fill="' + ({clay:"#c98268",wood:"#b88d57",iron:"#9ca7ac"}[state.material]) + '" stroke="#6c777b" stroke-width="4"/>' : '<rect class="weight-object" x="245" y="145" width="150" height="80" rx="10" fill="' + ({clay:"#c98268",wood:"#b88d57",iron:"#9ca7ac"}[state.material]) + '" stroke="#6c777b" stroke-width="4"/>';
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="形と材料による物の重さのシミュレーション">' +
           '<rect width="640" height="360" fill="#f0f4f6"/><text x="28" y="42" class="scene-title">形を変えると、重さは？</text><text x="30" y="80" class="scene-caption">' + (state.shape === "round" ? "丸い形" : "平らな形") + "・" + ({clay:"粘土",wood:"木",iron:"鉄"}[state.material]) + "・" + state.amount + 'こ分</text>' +

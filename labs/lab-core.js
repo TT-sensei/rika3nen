@@ -13,6 +13,7 @@
         '<div class="lab-workspace"><section class="simulation-column" aria-label="シミュレーション"><div class="sim-stage" data-sim-stage></div><div class="sim-readout" data-sim-readout aria-live="polite"></div><div class="sim-actions" data-sim-actions></div></section><aside class="control-panel instant-panel" aria-label="条件操作"><div class="control-heading"><p class="eyebrow">TRY IT</p><h2>条件を変えてみよう</h2><p>一つずつ変えると、ちがいが見つけやすくなります。</p></div><div data-control-panel></div><section class="trial-panel" aria-labelledby="trialTitle"><div class="trial-heading"><h3 id="trialTitle">くらべた結果</h3><button type="button" data-clear-trials>消す</button></div><div class="trial-list" data-trial-list><p>「この結果をくらべる」で3回分を並べられます。</p></div></section></aside></div>' +
         '<p class="model-note" data-model-note></p></section>';
     const view = root.querySelector(".lab-screen");
+    const stage = view.querySelector("[data-sim-stage]");
     const cleanups = [];
     const on = (target, event, handler, options) => {
       if (!target) return handler;
@@ -21,6 +22,15 @@
       return handler;
     };
     view.querySelectorAll("[data-lab-home]").forEach(button => on(button, "click", () => onHome && onHome()));
+    on(stage, "pointerdown", event => {
+      const rect = stage.getBoundingClientRect();
+      const spark = document.createElement("span");
+      spark.className = "stage-touch-spark";
+      spark.style.left = (event.clientX - rect.left) + "px";
+      spark.style.top = (event.clientY - rect.top) + "px";
+      stage.append(spark);
+      window.setTimeout(() => spark.remove(), 520);
+    });
     const trialList = view.querySelector("[data-trial-list]");
     let trialDraft = null;
     let trials = [];
@@ -32,7 +42,7 @@
     on(view.querySelector("[data-clear-trials]"), "click", () => { trials = []; renderTrials(); });
     return {
       root: view,
-      stage: view.querySelector("[data-sim-stage]"),
+      stage,
       readout: view.querySelector("[data-sim-readout]"),
       actions: view.querySelector("[data-sim-actions]"),
       panel: view.querySelector("[data-control-panel]"),
@@ -124,4 +134,3 @@
 
   window.RikaThreeLabCore = { esc, shell, section, range, options, action, presets, renderReadout, renderError };
 })();
-
