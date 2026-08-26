@@ -381,3 +381,13 @@ body{background:radial-gradient(circle at 95% 0,#cfeef7 0 14rem,transparent 14re
 
 /* Apply grade color to navigation and cards */
 :root{--grade-accent:#2387a8;--grade-deep:#15506c;--grade-soft:#d9f0f8;--grade-card:#f7fcfe} .site-header,.header-bar{background:var(--grade-deep)!important}.unit-card,.lab-card,.asset-card,.home-collection-badge,.phase-tab,.activity-card,.activity-nav,.unit-banner{border-color:#b9dce8;background:var(--grade-card)}.unit-card:hover,.lab-card:hover,.asset-card:hover{border-color:var(--grade-accent)}.primary-button,.tab-button.active,.phase-tab[aria-selected="true"]{background:var(--grade-accent)!important;border-color:var(--grade-accent)!important}.unit-banner{border-top-color:var(--grade-accent)}
+
+
+/* Discovery missions: short, unit-specific prompts that keep the LAB exploratory. */
+.discovery-mission{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;margin-top:10px;padding:10px 11px;border:1px solid color-mix(in srgb,var(--lab-accent) 28%,#d9e1df);border-radius:12px;background:color-mix(in srgb,var(--lab-accent) 7%,#fff);box-shadow:0 4px 14px rgba(28,60,52,.06)}
+.mission-heading{display:flex;align-items:flex-start;gap:8px;min-width:0}.mission-heading>span{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:9px;background:#fff;font-size:1rem}.mission-heading div{min-width:0}.mission-heading small,.mission-heading b{display:block}.mission-heading small{margin-bottom:2px;color:var(--lab-accent);font-size:.64rem;font-weight:900;letter-spacing:.06em}.mission-heading b{font-size:.73rem;line-height:1.45}
+.mission-dots{display:flex;gap:5px}.mission-dots button{display:grid;place-items:center;width:28px;height:28px;padding:0;border:1px solid color-mix(in srgb,var(--lab-accent) 35%,#d9e1df);border-radius:50%;background:#fff;color:var(--lab-accent);font-size:.68rem;font-weight:900;cursor:pointer}.mission-dots button[aria-pressed="true"]{border-color:var(--lab-accent);background:var(--lab-accent);color:#fff;box-shadow:0 0 0 3px color-mix(in srgb,var(--lab-accent) 18%,transparent)}
+.instant-lab .sim-stage.is-changing svg{animation:labSceneRefresh .34s ease-out}.instant-lab .sim-stage.is-changing .instant-result{animation:labSceneRefresh .34s ease-out}
+@keyframes labSceneRefresh{from{opacity:.55;transform:scale(.992)}to{opacity:1;transform:scale(1)}}
+@media(max-width:720px){.discovery-mission{grid-template-columns:1fr}.mission-dots{justify-content:flex-end}}
+@media(prefers-reduced-motion:reduce){.instant-lab .sim-stage.is-changing svg,.instant-lab .sim-stage.is-changing .instant-result{animation:none}}
