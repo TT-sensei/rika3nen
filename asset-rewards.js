@@ -20,10 +20,11 @@
     const n = unlocked();
     const scienceHtml = science.map((x,i) => img(BASE+"badges/science/"+x[0]+"/badge.webp", "理科｜"+x[1], i >= Math.min(n, science.length))).join("");
     const elementHtml = elements.map((x,i) => img(BASE+"elements/"+x+"/level-"+((i%3)+1)+"/badge.webp", "エレメント｜"+x.toUpperCase(), i+science.length >= n)).join("");
-    const collectionBadge = {insect:"butterfly"};
-    const collectionLabels = {insect:"むし"};
-    const collectionHtml = collections.map(x => { const item = collectionBadge[x] || "badge"; const file = x === "space" ? item : item + "/badge.webp"; const label = collectionLabels[x] || x.toUpperCase(); return "<div class=\"asset-card asset-link\"><img class=\"discovery-badge\" src=\"" + BASE + "collections/" + x + "/common/" + file + "\" alt=\"コレクション｜" + label + "\" loading=\"lazy\"><b>コレクション｜"+label+"</b><small>軽量版バッジを見る</small></div>"; }).join("");
-    return "<section class=\"asset-page\"><button class=\"text-button\" data-assets-home>単元一覧へ</button><p class=\"eyebrow\">SCIENCE ASSET BOOK</p><h1>理科のおまけ図鑑</h1><p>理科の学びにぴったりなバッジを中心に、エレメントやコレクションも集めよう。解放数："+n+"</p><h2>理科バッジ</h2><div class=\"asset-grid\">"+scienceHtml+"</div><h2>エレメント</h2><div class=\"asset-grid\">"+elementHtml+"</div><h2>コレクション</h2><div class=\"asset-grid\">"+collectionHtml+"</div></section>";
+    const collectionSeries = "insect";
+    const collectionLabel = "むし";
+    const collectionBadges = [{rarity:"common",id:"ant",label:"アリ"},{rarity:"common",id:"bee",label:"ハチ"},{rarity:"common",id:"beetle",label:"カブトムシ"},{rarity:"common",id:"butterfly",label:"チョウ"},{rarity:"common",id:"dragonfly",label:"トンボ"},{rarity:"common",id:"grasshopper",label:"バッタ"},{rarity:"common",id:"ladybug",label:"テントウムシ"},{rarity:"common",id:"stag-beetle",label:"クワガタ"},{rarity:"rare",id:"caterpillar",label:"イモムシ"},{rarity:"rare",id:"cicada",label:"セミ"},{rarity:"rare",id:"firefly",label:"ホタル"},{rarity:"rare",id:"praying-mantis",label:"カマキリ"},{rarity:"super-rare",id:"atlas-beetle",label:"ヘラクレスオオカブト"},{rarity:"super-rare",id:"jewel-beetle",label:"宝石カブト"},{rarity:"secret",id:"rainbow-butterfly",label:"虹色のチョウ"}];
+    const collectionHtml = collectionBadges.map((badge,i) => img(BASE+"collections/"+collectionSeries+"/"+badge.rarity+"/"+badge.id+"/badge.webp", "コレクション｜"+badge.label, i >= Math.min(n, collectionBadges.length))).join("");
+    return "<section class=\"asset-page\"><button class=\"text-button\" data-assets-home>単元一覧へ</button><p class=\"eyebrow\">SCIENCE ASSET BOOK</p><h1>理科のおまけ図鑑</h1><p>理科の学びにぴったりなバッジを中心に、エレメントやコレクションも集めよう。解放数："+n+"</p><h2>理科バッジ</h2><div class=\"asset-grid\">"+scienceHtml+"</div><h2>エレメント</h2><div class=\"asset-grid\">"+elementHtml+"</div><h2>コレクション｜"+collectionLabel+"</h2><div class=\"asset-grid\">"+collectionHtml+"</div></section>";
   }
   if (!window.ScienceGame) return;
   const originalPanel = window.ScienceGame.panel;
