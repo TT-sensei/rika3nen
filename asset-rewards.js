@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const grade = document.title.match(/理科ラボ\s*(\d)/)?.[1] || "3";
-  const BASE = "https://tt-sensei.github.io/edu-assets/assets/";
+  const BASE = "https://tt-sensei.github.io/edu-assets/assets/web/";
   const science = [
     ["science-observer","観察の目"],["wonder","ふしぎ発見"],["prediction","予想"],["experiment","実験"],["fair-test","条件をそろえる"],
     ["science-measure","測定"],["science-record","記録"],["compare-results","結果を比べる"],["evidence","証拠から考える"],
@@ -18,9 +18,10 @@
   const unlocked = () => state.unlocked || 0;
   function gallery() {
     const n = unlocked();
-    const scienceHtml = science.map((x,i) => img(BASE+"badges/science/"+x[0]+"/badge.png", "理科｜"+x[1], i >= Math.min(n, science.length))).join("");
-    const elementHtml = elements.map((x,i) => img(BASE+"elements/"+x+"/level-"+((i%3)+1)+"/badge.png", "エレメント｜"+x.toUpperCase(), i+science.length >= n)).join("");
-    const collectionHtml = collections.map(x => x === "space" ? img(BASE+"collections/space/common/01-earth.png", "コレクション｜SPACE", true) : "<a class=\"asset-card asset-link asset-locked\" href=\"https://tt-sensei.github.io/edu-assets/#/collections/"+x+"\" target=\"_blank\" rel=\"noopener\"><span>◈</span><b>コレクション｜"+x.toUpperCase()+"</b><small>edu-assetsで見る</small></a>").join("");
+    const scienceHtml = science.map((x,i) => img(BASE+"badges/science/"+x[0]+"/badge.webp", "理科｜"+x[1], i >= Math.min(n, science.length))).join("");
+    const elementHtml = elements.map((x,i) => img(BASE+"elements/"+x+"/level-"+((i%3)+1)+"/badge.webp", "エレメント｜"+x.toUpperCase(), i+science.length >= n)).join("");
+    const collectionBadge = {animal:"bear","sea-animal":"dolphin",fruit:"apple",sweets:"candy",gem:"amethyst",dinosaur:"triceratops",space:"01-earth.webp",fantasy:"dragon",insect:"butterfly",car:"race-car",treasure:"coin-pouch",flower:"sunflower"};
+    const collectionHtml = collections.map(x => { const item = collectionBadge[x] || "badge"; const file = x === "space" ? item : item + "/badge.webp"; return "<a class=\"asset-card asset-link\" href=\"https://tt-sensei.github.io/edu-assets/#/collections/"+x+"\" target=\"_blank\" rel=\"noopener\"><img class=\"discovery-badge\" src=\"" + BASE + "collections/" + x + "/common/" + file + "\" alt=\"コレクション｜" + x.toUpperCase() + "\" loading=\"lazy\"><b>コレクション｜"+x.toUpperCase()+"</b><small>軽量版バッジを見る</small></a>"; }).join("");
     return "<section class=\"asset-page\"><button class=\"text-button\" data-assets-home>単元一覧へ</button><p class=\"eyebrow\">SCIENCE ASSET BOOK</p><h1>理科のおまけ図鑑</h1><p>理科の学びにぴったりなバッジを中心に、エレメントやコレクションも集めよう。解放数："+n+"</p><h2>理科バッジ</h2><div class=\"asset-grid\">"+scienceHtml+"</div><h2>エレメント</h2><div class=\"asset-grid\">"+elementHtml+"</div><h2>コレクション</h2><div class=\"asset-grid\">"+collectionHtml+"</div></section>";
   }
   if (!window.ScienceGame) return;
