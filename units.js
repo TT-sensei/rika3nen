@@ -1,7 +1,16 @@
 (() => {
   "use strict";
 
-  const k = (id, prompt, pair, choices, answer, explanation) => ({ id, prompt, pair, choices, answer, explanation });
+  const k = (id, prompt, pair, choices, answer, explanation) => {
+    // 追加問題には「pairなし」の短い記法もあるため、旧データを正規化する。
+    if (typeof choices === "number" && typeof answer === "string" && explanation === undefined) {
+      explanation = answer;
+      answer = choices;
+      choices = pair;
+      pair = null;
+    }
+    return { id, prompt, pair, choices, answer, explanation };
+  };
   const p = (id, title, prediction, lead, buckets, cards, explanation) => ({ id, title, prediction, lead, buckets, cards, explanation });
   const c = (id, prompt, evidence, choices, answer, explanation) => ({ id, prompt, evidence, choices, answer, explanation });
   const buckets = (a, b) => [{ id: "a", label: a }, { id: "b", label: b }];
