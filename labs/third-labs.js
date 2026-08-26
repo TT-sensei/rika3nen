@@ -307,12 +307,17 @@
       const tested = materials[state.material];
       const lit = state.closed === "closed" && tested.conducts;
       const wireColor = lit ? "#d59620" : "#718a91";
-      const switchPart = state.closed === "closed" ? '<line x1="300" y1="274" x2="360" y2="274" stroke="' + wireColor + '" stroke-width="8" stroke-linecap="round"/>' : '<line x1="300" y1="274" x2="350" y2="242" stroke="#718a91" stroke-width="8" stroke-linecap="round"/>';
+      const wireSegments =
+        '<path d="M105 245 V115 H190" fill="none" stroke="' + wireColor + '" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<path d="M270 115 H505 V146" fill="none" stroke="' + wireColor + '" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<path d="M505 214 V274 H360" fill="none" stroke="' + wireColor + '" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<path d="M300 274 H145" fill="none" stroke="' + wireColor + '" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>';
+      const switchPart = state.closed === "closed" ? '<line x1="300" y1="274" x2="360" y2="274" stroke="' + wireColor + '" stroke-width="8" stroke-linecap="round"/>' : '<line x1="300" y1="274" x2="344" y2="244" stroke="#718a91" stroke-width="8" stroke-linecap="round"/>';
       const flowMarks = lit ? [[130,115],[340,115],[510,220],[420,274],[210,274]].map((p,i) => '<circle class="circuit-charge" style="--charge-delay:' + (i*.12) + 's" cx="' + p[0] + '" cy="' + p[1] + '" r="6" fill="#f6c846"/>').join("") : "";
       view.stage.innerHTML =
         '<svg class="extra-svg circuit-diagram" viewBox="0 0 640 360" role="img" aria-label="乾電池、調べる物、豆電球、スイッチが一つの輪につながった回路">' +
           '<defs><radialGradient id="bulbLight"><stop offset="0" stop-color="#fff8a6" stop-opacity=".95"/><stop offset="1" stop-color="#f7d75a" stop-opacity="0"/></radialGradient></defs><rect width="640" height="360" fill="#fffaf0"/><text x="28" y="38" class="scene-title">電気の通り道を一周たどろう</text><text x="30" y="74" class="scene-caption">' + (lit ? "切れ目のない一つの輪 → 豆電球がつく" : state.closed === "open" ? "スイッチに切れ目がある" : tested.label + "は電気を通さない") + '</text>' +
-          '<path d="M105 245 V115 H190 M270 115 H505 V235 H360 M300 274 H145" fill="none" stroke="' + wireColor + '" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>' +
+          wireSegments +
           '<g><circle cx="190" cy="115" r="10" fill="#d9e1df" stroke="#60777d" stroke-width="3"/><circle cx="270" cy="115" r="10" fill="#d9e1df" stroke="#60777d" stroke-width="3"/><rect x="190" y="94" width="80" height="42" rx="8" fill="' + tested.color + '" stroke="#6e7776" stroke-width="3"/><text x="205" y="121" class="component-label">' + tested.label + '</text><text x="180" y="157" class="tiny-label">調べる物</text></g>' +
           '<g><rect x="85" y="225" width="60" height="74" rx="8" fill="#f0d36c" stroke="#8d7225" stroke-width="3"/><line x1="96" y1="245" x2="134" y2="245" stroke="#705b1d" stroke-width="5"/><line x1="103" y1="274" x2="127" y2="274" stroke="#705b1d" stroke-width="3"/><text x="74" y="322" class="component-label">乾電池 ＋／−</text></g>' +
           '<g><circle cx="505" cy="180" r="34" fill="' + (lit ? "#fff4a4" : "#eef0e9") + '" stroke="#7e7468" stroke-width="5"/><path d="M487 184 Q505 153 523 184 M493 188 H517" fill="none" stroke="' + (lit ? "#d88917" : "#999") + '" stroke-width="4"/><rect x="488" y="212" width="34" height="24" rx="4" fill="#9a9c96"/>' + (lit ? '<circle class="bulb-glow" cx="505" cy="180" r="64" fill="url(#bulbLight)"/>' : "") + '<text x="468" y="259" class="component-label">豆電球</text></g>' +
