@@ -136,7 +136,7 @@
           </div>
         </section>
         ${window.ScienceGame ? window.ScienceGame.panel() : ""}
-        ${collectionStripMarkup()}
+        
       </section>`;
   }
 
