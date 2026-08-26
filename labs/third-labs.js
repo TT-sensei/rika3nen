@@ -22,82 +22,128 @@
   }
 
   function living(view, core) {
-    const state = { light: "shade", moisture: "moist" };
-    const section = core.section(view.panel, "すみかの条件を変える", "明るさと湿り方を変えて、見つかりやすさを比べよう。");
-    const light = core.options(section, { label: "明るさ", values: [option("sun", "日なた"), option("shade", "日かげ")], value: state.light, format: item => item.label, onChange: value => { state.light = value; draw(); } });
-    const moisture = core.options(section, { label: "地面", values: [option("dry", "乾いている"), option("moist", "しめっている")], value: state.moisture, format: item => item.label, onChange: value => { state.moisture = value; draw(); } });
+    const state = { creature: "pillbug", place: "understone" };
+    const creatures = {
+      pillbug: { label: "ダンゴムシ", icon: "●", color: "#7b6a61" },
+      butterfly: { label: "チョウ", icon: "🦋", color: "#d78bab" }
+    };
+    const places = {
+      understone: { label: "石の下", ground: "#82906f" },
+      flowers: { label: "花のある日なた", ground: "#83b968" },
+      bare: { label: "かわいた地面", ground: "#d2b77d" }
+    };
+    const scores = {
+      pillbug: { understone: 9, flowers: 3, bare: 1 },
+      butterfly: { understone: 1, flowers: 9, bare: 2 }
+    };
+    const section = core.section(view.panel, "生き物と場所を変える", "同じ場所でも、生き物の種類によって見つかり方は同じかな。");
+    const creature = core.options(section, { label: "さがす生き物", values: [option("pillbug", "ダンゴムシ"), option("butterfly", "チョウ")], value: state.creature, format: item => item.label, onChange: value => { state.creature = value; draw(); } });
+    const place = core.options(section, { label: "さがす場所", values: [option("understone", "石の下"), option("flowers", "花のある日なた"), option("bare", "かわいた地面")], value: state.place, format: item => item.label, onChange: value => { state.place = value; draw(); } });
     function draw() {
-      const habitat = (state.light === "shade" ? 26 : 12) + (state.moisture === "moist" ? 28 : 5);
-      const bugs = Math.max(1, Math.round(habitat / 5));
-      const plantHeight = state.light === "sun" ? 100 : 68;
-      const bugMarks = Array.from({ length: bugs }, (_, i) => {
-        const x = 125 + (i * 57) % 380;
-        const y = 270 - (i % 3) * 23;
-        return '<g class="sim-bug" style="--bug-delay:' + (i * .09) + 's"><circle cx="' + x + '" cy="' + y + '" r="8" fill="#7b574c"/><circle cx="' + (x - 7) + '" cy="' + (y - 5) + '" r="5" fill="#b98358"/><circle cx="' + (x + 7) + '" cy="' + (y - 5) + '" r="5" fill="#b98358"/></g>';
+      const creatureData = creatures[state.creature];
+      const placeData = places[state.place];
+      const found = scores[state.creature][state.place];
+      const marks = Array.from({ length: found }, (_, i) => {
+        const x = 126 + (i * 67) % 390;
+        const y = 222 + (i % 3) * 22;
+        if (state.creature === "butterfly") {
+          return '<text class="sim-bug" style="--bug-delay:' + (i * .08) + 's" x="' + x + '" y="' + y + '" font-size="27">🦋</text>';
+        }
+        return '<g class="sim-bug" style="--bug-delay:' + (i * .08) + 's"><circle cx="' + x + '" cy="' + y + '" r="10" fill="' + creatureData.color + '"/><path d="M' + (x - 7) + ' ' + y + 'h14" stroke="#ded6ce" stroke-width="2"/></g>';
       }).join("");
+      const scene = state.place === "understone"
+        ? '<ellipse cx="320" cy="242" rx="205" ry="52" fill="#757b72"/><ellipse cx="320" cy="229" rx="195" ry="42" fill="#a7aaa2"/>'
+        : state.place === "flowers"
+          ? '<path d="M105 270 Q150 150 195 270 M220 270 Q270 135 320 270 M350 270 Q405 145 460 270" fill="none" stroke="#4f934b" stroke-width="11" stroke-linecap="round"/><circle cx="150" cy="164" r="18" fill="#f0a3b3"/><circle cx="270" cy="150" r="18" fill="#f2c955"/><circle cx="405" cy="160" r="18" fill="#a9a1df"/>'
+          : '<path d="M90 265 Q180 245 270 265 T450 260 T570 267" fill="none" stroke="#ad9365" stroke-width="5"/>';
       view.stage.innerHTML =
-        '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="すみかの条件と生き物の見つかりやすさのシミュレーション">' +
-          '<rect width="640" height="360" fill="#edf7ee"/><rect y="270" width="640" height="90" fill="' + (state.moisture === "moist" ? "#a9c88b" : "#d9c28e") + '"/>' +
-          '<circle class="sim-sun-glow" cx="540" cy="66" r="31" fill="' + (state.light === "sun" ? "#f4c84d" : "#dce7d9") + '"/><text x="28" y="42" class="scene-title">場所を変えると、何が見つかる？</text>' +
-          '<text x="30" y="80" class="scene-caption">' + (state.light === "sun" ? "日なた" : "日かげ") + '・' + (state.moisture === "moist" ? "しめった地面" : "乾いた地面") + '</text>' +
-          '<path d="M105 270 Q150 170 205 270 M175 270 Q220 145 265 270 M255 270 Q305 185 355 270" fill="none" stroke="#4f934b" stroke-width="12" stroke-linecap="round"/>' +
-          '<path d="M0 245 Q130 220 260 245 T520 240 T640 248" fill="none" stroke="#7d9e62" stroke-width="4"/>' + bugMarks +
-          '<text x="112" y="330" class="component-label">植物やかくれ場所</text><text x="425" y="330" class="component-label">生き物</text>' +
+        '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="' + creatureData.label + 'を' + placeData.label + 'で探すシミュレーション">' +
+          '<rect width="640" height="360" fill="#edf7ee"/><rect y="270" width="640" height="90" fill="' + placeData.ground + '"/>' +
+          '<text x="28" y="42" class="scene-title">どんな場所で見つかる？</text><text x="30" y="80" class="scene-caption">' + creatureData.label + 'を「' + placeData.label + '」でさがす</text>' +
+          scene + marks +
+          '<text x="55" y="330" class="component-label">場所と生き物を一つずつ変えてくらべよう</text>' +
         '</svg>';
+      const reason = state.creature === "pillbug"
+        ? (state.place === "understone" ? "ダンゴムシは、暗くて湿り気のある石の下などで見つかりやすいね。" : "別の場所も調べ、暗さや湿り気との関係を比べよう。")
+        : (state.place === "flowers" ? "チョウは、明るく花のある場所で見つかりやすいね。" : "花のある場所と比べ、食べ物や明るさとの関係を考えよう。");
       core.renderReadout(view.readout, {
         metrics: [
-          { label: "環境", value: (state.light === "sun" ? "日なた" : "日かげ") + "・" + (state.moisture === "moist" ? "しめった" : "乾いた"), detail: "変えた条件" },
-          { label: "見つかりやすさ", value: bugs + " / 10", detail: "モデルの目安" }
+          { label: "さがす生き物", value: creatureData.label, detail: "種類を区別して観察" },
+          { label: "見つかりやすさ", value: found + " / 10", detail: placeData.label + "でのモデル" }
         ],
-        message: state.moisture === "moist" && state.light === "shade" ? "しめっていて日かげの場所では、かくれやすい生き物が見つかりやすいね。" : "明るさや湿り方を一つずつ変えて、見つかる数の違いを比べてみよう。"
+        message: reason,
+        note: "生き物によって、食べ物やかくれ場所など、くらしやすい環境はちがいます。"
       });
-      view.setTrial({ condition: (state.light === "sun" ? "日なた" : "日かげ") + "・" + (state.moisture === "moist" ? "しめった地面" : "乾いた地面"), result: "見つかりやすさ " + bugs + " / 10" });
+      view.setTrial({ condition: creatureData.label + "・" + placeData.label, result: "見つかりやすさ " + found + " / 10" });
     }
     return {
       render: draw,
-      reset: () => { state.light = "shade"; state.moisture = "moist"; light.set(state.light); moisture.set(state.moisture); draw(); },
-      step: () => { state.moisture = state.moisture === "moist" ? "dry" : "moist"; moisture.set(state.moisture); draw(); }
+      reset: () => { state.creature = "pillbug"; state.place = "understone"; creature.set(state.creature); place.set(state.place); draw(); },
+      stepLabel: "場所を1つ進める",
+      step: () => {
+        const order = ["understone", "flowers", "bare"];
+        state.place = order[(order.indexOf(state.place) + 1) % order.length];
+        place.set(state.place);
+        draw();
+      }
     };
   }
 
   function plants(view, core) {
-    const state = { water: "enough", sunlight: "sun", day: 7 };
-    const section = core.section(view.panel, "育つ条件を変える", "水・日光・日数を変えて、植物の姿を比べよう。");
-    const water = core.options(section, { label: "水", values: [option("none", "なし"), option("enough", "適量"), option("much", "多すぎ")], value: state.water, format: item => item.label, onChange: value => { state.water = value; draw(); } });
-    const sunlight = core.options(section, { label: "日光", values: [option("sun", "当てる"), option("shade", "当てない")], value: state.sunlight, format: item => item.label, onChange: value => { state.sunlight = value; draw(); } });
-    const day = core.range(section, { label: "育てる日数", min: 0, max: 28, value: state.day, format: value => value + "日", onInput: value => { state.day = value; draw(); } });
+    const state = { kind: "sunflower", day: 14, focus: "growth" };
+    const kinds = {
+      sunflower: { label: "ヒマワリ", stem: "#4f934b", flower: "#f2c94c", maxHeight: 188 },
+      balsam: { label: "ホウセンカ", stem: "#4a8b62", flower: "#e692b2", maxHeight: 158 }
+    };
+    const section = core.section(view.panel, "育ち方を時間で見る", "日数や植物の種類を変えて、育つ順序と体のつくりを比べよう。");
+    const kind = core.options(section, { label: "植物", values: [option("sunflower", "ヒマワリ"), option("balsam", "ホウセンカ")], value: state.kind, format: item => item.label, onChange: value => { state.kind = value; draw(); } });
+    const day = core.range(section, { label: "種をまいてから", min: 0, max: 63, step: 7, value: state.day, format: value => value + "日", onInput: value => { state.day = value; draw(); } });
+    const focus = core.options(section, { label: "見るところ", values: [option("growth", "育つ順序"), option("body", "体のつくり")], value: state.focus, format: item => item.label, onChange: value => { state.focus = value; draw(); } });
     function draw() {
-      const condition = state.water === "enough" && state.sunlight === "sun" ? 1 : state.water === "none" || state.sunlight === "shade" ? .28 : .62;
-      const growth = clamp(state.day / 28 * condition, 0, 1);
-      const height = 35 + growth * 170;
-      const leaves = Math.max(0, Math.round(growth * 8));
+      const data = kinds[state.kind];
+      const growth = clamp(state.day / 49, 0, 1);
+      const height = 20 + growth * data.maxHeight;
+      const leaves = state.day < 7 ? 0 : Math.min(10, 2 + Math.floor(state.day / 7));
+      const stageName = state.day === 0 ? "種" : state.day < 14 ? "芽が出る" : state.day < 35 ? "葉がふえてのびる" : state.day < 49 ? "つぼみ・花" : "花のあとに実";
       const leafMarks = Array.from({ length: leaves }, (_, i) => {
-        const x = 318 + (i % 2 ? 28 : -28);
-        const y = 260 - i * 19;
-        return '<ellipse class="sim-plant-leaf" style="--leaf-delay:' + (i * .045) + 's" cx="' + x + '" cy="' + y + '" rx="27" ry="12" transform="rotate(' + (i % 2 ? 24 : -24) + ' ' + x + ' ' + y + ')" fill="#4f934b"/>';
+        const x = 320 + (i % 2 ? 31 : -31);
+        const y = 260 - i * Math.max(12, height / Math.max(4, leaves));
+        return '<ellipse class="sim-plant-leaf" style="--leaf-delay:' + (i * .04) + 's" cx="' + x + '" cy="' + y + '" rx="28" ry="12" transform="rotate(' + (i % 2 ? 24 : -24) + ' ' + x + ' ' + y + ')" fill="' + data.stem + '"/>';
       }).join("");
-      const flower = growth > .82 ? '<g class="sim-flower"><circle cx="318" cy="82" r="13" fill="#e693a5"/><circle cx="335" cy="88" r="11" fill="#e693a5"/><circle cx="325" cy="72" r="10" fill="#e693a5"/><circle cx="325" cy="84" r="5" fill="#f1c74e"/></g>' : "";
+      const flower = state.day >= 35
+        ? (state.kind === "sunflower"
+          ? '<g class="sim-flower"><circle cx="320" cy="' + (260 - height) + '" r="29" fill="' + data.flower + '"/><circle cx="320" cy="' + (260 - height) + '" r="12" fill="#7d5b31"/></g>'
+          : '<g class="sim-flower"><circle cx="307" cy="' + (260 - height + 5) + '" r="15" fill="' + data.flower + '"/><circle cx="330" cy="' + (260 - height) + '" r="15" fill="' + data.flower + '"/></g>')
+        : "";
+      const fruit = state.day >= 49 ? '<ellipse cx="320" cy="' + (282 - height) + '" rx="13" ry="22" fill="#8aa65c" stroke="#567342" stroke-width="3"/>' : "";
+      const roots = state.focus === "body" ? '<g class="plant-roots"><path d="M320 274 Q292 305 275 337 M320 274 Q335 311 370 338 M320 274 V345" fill="none" stroke="#9a744f" stroke-width="6" stroke-linecap="round"/><text x="382" y="336" class="component-label">根</text></g>' : "";
+      const labels = state.focus === "body"
+        ? '<path d="M350 170 H430" stroke="#607483" stroke-width="2"/><text x="440" y="176" class="component-label">葉</text><path d="M329 225 H430" stroke="#607483" stroke-width="2"/><text x="440" y="231" class="component-label">茎</text>'
+        : '<text x="90" y="326" class="component-label">種 → 芽 → 葉がふえる → 花 → 実</text>';
       view.stage.innerHTML =
-        '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="植物の育ちのシミュレーション">' +
-          '<rect width="640" height="360" fill="#f2faed"/><rect y="274" width="640" height="86" fill="#b99a72"/><circle class="sim-sun-glow" cx="535" cy="65" r="32" fill="' + (state.sunlight === "sun" ? "#f5cb54" : "#ced9cd") + '"/>' +
-          '<text x="28" y="42" class="scene-title">条件を変えると、植物の育ちは？</text><text x="30" y="80" class="scene-caption">' + state.day + "日目・水：" + (state.water === "enough" ? "適量" : state.water === "none" ? "なし" : "多すぎ") + "・日光：" + (state.sunlight === "sun" ? "あり" : "なし") + '</text>' +
-          '<path class="sim-plant-stem" d="M318 274 V' + (274 - height) + '" stroke="#4f934b" stroke-width="12" stroke-linecap="round"/>' + leafMarks + flower +
-          '<text x="105" y="330" class="component-label">芽 → 葉 → 花</text><text x="430" y="330" class="component-label">成長 ' + Math.round(growth * 100) + '%</text>' +
+        '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="' + data.label + 'の育ち方と体のつくりのシミュレーション">' +
+          '<rect width="640" height="360" fill="#f2faed"/><rect y="274" width="640" height="86" fill="#b99a72"/>' +
+          '<text x="28" y="42" class="scene-title">時間がたつと、どこが変わる？</text><text x="30" y="80" class="scene-caption">' + data.label + '・' + state.day + '日目・' + stageName + '</text>' +
+          (state.day === 0 ? '<ellipse cx="320" cy="268" rx="24" ry="12" fill="#8e6b42"/>' : '<path class="sim-plant-stem" d="M320 274 V' + (274 - height) + '" stroke="' + data.stem + '" stroke-width="12" stroke-linecap="round"/>' + leafMarks + flower + fruit) +
+          roots + labels +
         '</svg>';
       core.renderReadout(view.readout, {
         metrics: [
-          { label: "育ち", value: Math.round(growth * 100) + " / 100", detail: state.day + "日目のモデル" },
-          { label: "姿", value: leaves + "枚の葉" + (flower ? "・花" : ""), detail: "種からの変化" }
+          { label: "育ちの段階", value: stageName, detail: state.day + "日目のモデル" },
+          { label: "体のつくり", value: state.day === 0 ? "種" : "根・茎・葉" + (state.day >= 35 ? "・花" : "") + (state.day >= 49 ? "・実" : ""), detail: data.label }
         ],
-        message: state.water === "enough" && state.sunlight === "sun" ? "適量の水と日光があると、日数に合わせてよく育つね。" : "日光や水の条件を変えて、育ち方の違いを比べてみよう。"
+        message: state.focus === "body"
+          ? "大きくなっても、植物の体は主に根・茎・葉からできています。花のあとには実ができます。"
+          : "日数を進めると、芽が出て、葉がふえ、花が咲き、花のあとに実ができる順序が見えるね。",
+        note: "実際の育つ速さは、植物の種類や天候、育て方によって変わります。"
       });
-      view.setTrial({ condition: state.day + "日目・水" + (state.water === "enough" ? "適量" : state.water === "none" ? "なし" : "多すぎ") + "・日光" + (state.sunlight === "sun" ? "あり" : "なし"), result: "育ち " + Math.round(growth * 100) + " / 100" });
+      view.setTrial({ condition: data.label + "・" + state.day + "日目", result: stageName + "・葉 " + leaves + "枚" });
     }
     return {
       render: draw,
-      stepLabel: "4日進める",
-      reset: () => { state.water = "enough"; state.sunlight = "sun"; state.day = 7; water.set(state.water); sunlight.set(state.sunlight); day.set(state.day); draw(); },
-      step: () => { state.day = state.day >= 28 ? 0 : Math.min(28, state.day + 4); day.set(state.day); draw(); }
+      stepLabel: "7日進める",
+      reset: () => { state.kind = "sunflower"; state.day = 14; state.focus = "growth"; kind.set(state.kind); day.set(state.day); focus.set(state.focus); draw(); },
+      step: () => { state.day = state.day >= 63 ? 0 : state.day + 7; day.set(state.day); draw(); }
     };
   }
 
