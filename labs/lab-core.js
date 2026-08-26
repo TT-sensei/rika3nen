@@ -10,7 +10,7 @@
       '<section class="lab-screen instant-lab" style="--lab-accent:' + esc(manifest.accent || "#2a8068") + '">' +
         '<nav class="breadcrumbs" aria-label="現在位置"><button class="text-button" type="button" data-lab-home>シミュレーション一覧</button><span>›</span><span>' + esc(manifest.title) + '</span></nav>' +
         '<header class="lab-titlebar"><div><p class="eyebrow">SIMULATION LAB / ' + esc(manifest.unit) + '</p><h1>' + esc(manifest.title) + '</h1><p>' + esc(manifest.summary) + '</p></div><button class="secondary-button lab-back" type="button" data-lab-home>一覧へ戻る</button></header>' +
-        '<div class="lab-workspace"><section class="simulation-column" aria-label="シミュレーション"><div class="sim-stage" data-sim-stage></div><div class="sim-readout" data-sim-readout aria-live="polite"></div><div class="sim-actions" data-sim-actions></div></section><aside class="control-panel instant-panel" aria-label="条件操作"><div class="control-heading"><p class="eyebrow">TRY IT</p><h2>条件を変えてみよう</h2><p>一つずつ変えると、ちがいが見つけやすくなります。</p></div><div data-control-panel></div><section class="trial-panel" aria-labelledby="trialTitle"><div class="trial-heading"><h3 id="trialTitle">くらべた結果</h3><button type="button" data-clear-trials>消す</button></div><div class="trial-list" data-trial-list><p>「この結果をくらべる」で3回分を並べられます。</p></div></section></aside></div>' +
+        '<div class="lab-workspace"><section class="simulation-column" aria-label="シミュレーション"><div class="sim-stage" data-sim-stage></div><div class="sim-readout" data-sim-readout aria-live="polite"></div><div class="sim-actions" data-sim-actions></div></section><aside class="control-panel instant-panel" aria-label="条件操作"><div class="control-heading"><p class="eyebrow">TRY IT</p><h2>条件を変えてみよう</h2><p>一つずつ変えると、ちがいが見つけやすくなります。</p></div><div data-control-panel></div><section class="trial-panel" aria-labelledby="trialTitle"><div class="trial-heading"><h3 id="trialTitle">くらべた結果</h3><button type="button" data-clear-trials>消す</button></div><div class="trial-list" data-trial-list aria-live="polite"><p>「この結果をくらべる」で3回分を並べられます。</p></div></section></aside></div>' +
         '<p class="model-note" data-model-note></p></section>';
     const view = root.querySelector(".lab-screen");
     const stage = view.querySelector("[data-sim-stage]");
@@ -57,10 +57,18 @@
     const trialList = view.querySelector("[data-trial-list]");
     let trialDraft = null;
     let trials = [];
+    const changedParts = (newer, older) => {
+      if (!older) return "";
+      const oldParts = String(older.condition || "").split("・");
+      const nextParts = String(newer.condition || "").split("・");
+      const changed = nextParts.filter((part, index) => part !== oldParts[index]);
+      return changed.length ? "前とちがう条件：" + changed.join("・") : "条件は同じ";
+    };
     const renderTrials = () => {
-      trialList.innerHTML = trials.length ? trials.map((trial, index) =>
-        '<article><span>' + (trials.length - index) + '</span><div><b>' + esc(trial.condition) + '</b><small>' + esc(trial.result) + '</small></div></article>'
-      ).join("") : '<p>「この結果をくらべる」で3回分を並べられます。</p>';
+      trialList.innerHTML = trials.length ? trials.map((trial, index) => {
+        const change = changedParts(trial, trials[index + 1]);
+        return '<article><span>' + (trials.length - index) + '</span><div><b>' + esc(trial.condition) + '</b><small>' + esc(trial.result) + '</small>' + (change ? '<em>' + esc(change) + '</em>' : '') + '</div></article>';
+      }).join("") : '<p>「この結果をくらべる」で3回分を並べられます。</p>';
     };
     on(view.querySelector("[data-clear-trials]"), "click", () => { trials = []; renderTrials(); });
     return {
@@ -73,6 +81,8 @@
       setTrial: trial => { trialDraft = trial; },
       saveTrial: () => {
         if (!trialDraft) return false;
+        const duplicate = trials[0] && trials[0].condition === trialDraft.condition && trials[0].result === trialDraft.result;
+        if (duplicate) return false;
         trials = [trialDraft, ...trials].slice(0, 3);
         renderTrials();
         return true;
