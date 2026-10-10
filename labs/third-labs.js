@@ -235,7 +235,7 @@
       force.set(state.force);
       draw();
     });
-    const stopDraggingCar = () => { draggingCar = false; };
+    const stopDraggingCar = () => { if (draggingCar && view.markTried) view.markTried(); draggingCar = false; };
     stage.addEventListener("pointerup", stopDraggingCar);
     stage.addEventListener("pointercancel", stopDraggingCar);
     stage.addEventListener("lostpointercapture", stopDraggingCar);
@@ -244,6 +244,7 @@
       event.preventDefault();
       state.force = clamp(state.force + (event.key === "ArrowRight" ? 5 : -5), 0, 100);
       force.set(state.force);
+      if (view.markTried) view.markTried();
       draw();
     });
     return {
@@ -478,7 +479,7 @@
       distance.set(state.distance);
       draw();
     });
-    const stopDraggingMagnet = () => { draggingMagnet = false; };
+    const stopDraggingMagnet = () => { if (draggingMagnet && view.markTried) view.markTried(); draggingMagnet = false; };
     magnetStage.addEventListener("pointerup", stopDraggingMagnet);
     magnetStage.addEventListener("pointercancel", stopDraggingMagnet);
     magnetStage.addEventListener("lostpointercapture", stopDraggingMagnet);
@@ -487,6 +488,7 @@
       event.preventDefault();
       state.distance = clamp(state.distance + (event.key === "ArrowRight" ? 5 : -5), 20, 100);
       distance.set(state.distance);
+      if (view.markTried) view.markTried();
       draw();
     });
     return {
