@@ -525,49 +525,54 @@ body{background:radial-gradient(circle at 95% 0,#cfeef7 0 14rem,transparent 14re
 .instant-lab .scene-tap-target:focus-visible{filter:drop-shadow(0 0 4px #176b91)}
 
 
-/* Tablet-first experiment layout: cover portrait and landscape tablets, including 1194px iPad viewports. */
+/* Tablet-first: put controls below the scene and let the SVG use the full tablet width. */
 @media (min-width: 761px) and (max-width: 1366px) {
-  main.lab-main {
+  body:has(.instant-lab) main.lab-main {
     width: calc(100% - 24px);
     max-width: 1400px;
   }
   .instant-lab .lab-workspace {
+    display: grid;
     width: 100%;
     height: auto;
     min-height: 0;
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
+    align-items: start;
   }
   .instant-lab .simulation-column {
+    display: flex;
     width: 100%;
     height: auto;
-    display: flex;
+    min-width: 0;
     flex-direction: column;
   }
   .instant-lab .sim-stage {
-    min-height: 0;
-    height: auto;
-    padding: 0;
-    overflow: visible;
-  }
-  .instant-lab .sim-stage svg,
-  .instant-lab .extra-svg {
     display: block;
     width: 100%;
-    max-width: none;
-    max-height: none;
-    min-height: 0;
     height: auto;
+    min-height: 0;
+    overflow: visible;
+    padding: 0;
   }
-  .instant-lab .instant-panel {
+  .instant-lab .sim-stage svg,
+  .instant-lab .sim-stage .extra-svg,
+  .instant-lab svg.extra-svg {
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+    min-width: 0;
+    min-height: 0;
+    max-width: none !important;
+    max-height: none !important;
+  }
+  .instant-lab .instant-panel,
+  .instant-lab .control-panel {
     width: 100%;
     height: auto;
     max-height: none;
     overflow: visible;
     padding: clamp(16px, 2.5vw, 28px);
-  }
-  .instant-lab .control-section {
-    padding: clamp(14px, 2vw, 22px);
   }
   .instant-lab .sim-readout {
     padding: 16px clamp(14px, 2.5vw, 30px);
@@ -576,7 +581,6 @@ body{background:radial-gradient(circle at 95% 0,#cfeef7 0 14rem,transparent 14re
     padding: 8px clamp(14px, 2.5vw, 30px) 18px;
   }
 }
-
 @media (min-width: 761px) and (max-width: 900px) {
   .instant-lab .sim-readout-grid,
   .instant-lab .instant-options {
