@@ -14,7 +14,7 @@
       if (typeof model.step === "function") { model.step(); view.markTried(); }
     });
     core.action(view.actions, "🎲 おまかせ", () => { core.randomizeOne(view); }, "randomize-button");
-    core.action(view.actions, "結果を記録", () => {
+    core.action(view.actions, "📒 記録", () => {
       if (view.saveTrial()) host.showToast && host.showToast("実験ノートに記録したよ");
     }, "primary-button");
     model.render();
