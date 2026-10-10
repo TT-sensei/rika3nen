@@ -5,6 +5,25 @@
   const one = (value, digits = 0) => Number(value).toFixed(digits);
   const option = (id, label) => ({ id, label });
 
+  function svgPoint(svg, event) {
+    if (svg && svg.createSVGPoint && svg.getScreenCTM) {
+      const matrix = svg.getScreenCTM();
+      if (matrix && matrix.inverse) {
+        const point = svg.createSVGPoint();
+        point.x = event.clientX;
+        point.y = event.clientY;
+        const mapped = point.matrixTransform(matrix.inverse());
+        return { x: mapped.x, y: mapped.y };
+      }
+    }
+    const rect = svg && svg.getBoundingClientRect();
+    if (!rect || !rect.width) return null;
+    return {
+      x: (event.clientX - rect.left) * 640 / rect.width,
+      y: (event.clientY - rect.top) * 360 / rect.height
+    };
+  }
+
   function mountInstant(root, { core, host, manifest, create }) {
     const view = core.shell(root, manifest, { onHome: () => host.routeTo("lab") });
     view.note.textContent = manifest.modelNote || "";
@@ -216,21 +235,30 @@
       view.setTrial({ condition: (state.source === "wind" ? "風" : "ゴム") + "・力 " + state.force + "%", result: distance + "cm進んだ" });
     }
     let draggingCar = false;
+    let carGrabOffset = 0;
     const stage = view.stage;
     stage.addEventListener("pointerdown", event => {
-      if (!event.target.closest || !event.target.closest(".sim-car")) return;
+      const handle = event.target.closest && event.target.closest(".sim-car");
+      if (!handle) return;
+      const svg = stage.querySelector("svg");
+      const point = svgPoint(svg, event);
+      if (!point) return;
+      const currentDistance = state.source === "wind" ? state.force * 2 : Math.round(state.force * state.force / 50);
+      carGrabOffset = point.x - (92 + currentDistance * 2 + 36);
       draggingCar = true;
-      if (stage.setPointerCapture) stage.setPointerCapture(event.pointerId);
+      if (stage.setPointerCapture) {
+        try { stage.setPointerCapture(event.pointerId); }
+        catch (_) { draggingCar = false; return; }
+      }
       event.preventDefault();
     });
     stage.addEventListener("pointermove", event => {
       if (!draggingCar) return;
       const svg = stage.querySelector("svg");
-      if (!svg) return;
-      const rect = svg.getBoundingClientRect();
-      if (!rect.width) return;
-      const x = (event.clientX - rect.left) * 640 / rect.width;
-      const distance = clamp((x - 92 - 36) / 2, 0, 200);
+      const point = svgPoint(svg, event);
+      if (!point) return;
+      const carCenter = point.x - carGrabOffset;
+      const distance = clamp((carCenter - 92 - 36) / 2, 0, 200);
       state.force = Math.round(state.source === "wind" ? distance / 2 : Math.sqrt(distance * 50));
       force.set(state.force);
       draw();
@@ -246,6 +274,8 @@
       force.set(state.force);
       if (view.markTried) view.markTried();
       draw();
+      const handle = stage.querySelector(".sim-car");
+      if (handle) handle.focus();
     });
     return {
       render: draw,
@@ -461,21 +491,29 @@
       view.setTrial({ condition: state.poleA + "極と" + state.poleB + "極・距離 " + state.distance + "cm・" + (state.material === "iron" ? "鉄" : "アルミ"), result: (opposite ? "引き合う" : "しりぞけ合う") + "・引き付け " + (state.material === "iron" ? force : 0) + " / 100" });
     }
     let draggingMagnet = false;
+    let magnetGrabOffset = 0;
     const magnetStage = view.stage;
     magnetStage.addEventListener("pointerdown", event => {
-      if (!event.target.closest || !event.target.closest(".magnet-right")) return;
+      const handle = event.target.closest && event.target.closest(".magnet-right");
+      if (!handle) return;
+      const svg = magnetStage.querySelector("svg");
+      const point = svgPoint(svg, event);
+      if (!point) return;
+      magnetGrabOffset = point.x - (350 + state.distance * 1.15);
       draggingMagnet = true;
-      if (magnetStage.setPointerCapture) magnetStage.setPointerCapture(event.pointerId);
+      if (magnetStage.setPointerCapture) {
+        try { magnetStage.setPointerCapture(event.pointerId); }
+        catch (_) { draggingMagnet = false; return; }
+      }
       event.preventDefault();
     });
     magnetStage.addEventListener("pointermove", event => {
       if (!draggingMagnet) return;
       const svg = magnetStage.querySelector("svg");
-      if (!svg) return;
-      const rect = svg.getBoundingClientRect();
-      if (!rect.width) return;
-      const x = (event.clientX - rect.left) * 640 / rect.width;
-      state.distance = Math.round(clamp((x - 350) / 1.15, 20, 100));
+      const point = svgPoint(svg, event);
+      if (!point) return;
+      const magnetCenter = point.x - magnetGrabOffset;
+      state.distance = Math.round(clamp((magnetCenter - 350) / 1.15, 20, 100));
       distance.set(state.distance);
       draw();
     });
@@ -490,6 +528,8 @@
       distance.set(state.distance);
       if (view.markTried) view.markTried();
       draw();
+      const handle = magnetStage.querySelector(".magnet-right");
+      if (handle) handle.focus();
     });
     return {
       render: draw,
