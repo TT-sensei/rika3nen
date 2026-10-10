@@ -82,8 +82,9 @@
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="' + creatureData.label + 'を' + placeData.label + 'で探すシミュレーション">' +
           '<rect width="640" height="360" fill="#edf7ee"/><rect y="270" width="640" height="90" fill="' + placeData.ground + '"/>' +
           '<text x="28" y="42" class="scene-title">どんな場所で見つかる？</text><text x="30" y="80" class="scene-caption">' + creatureData.label + 'を「' + placeData.label + '」でさがす</text>' +
-          scene + marks +
-          '<text x="55" y="330" class="component-label">場所と生き物を一つずつ変えてくらべよう</text>' +
+          '<g class="living-habitat-target scene-tap-target" role="button" tabindex="0" aria-label="場所を切り替える"><rect x="18" y="110" width="604" height="166" fill="#fff" fill-opacity="0.001"/>' + scene + '</g>' +
+          '<g class="living-creature-target scene-tap-target" role="button" tabindex="0" aria-label="さがす生き物を切り替える">' + marks + '</g>' +
+          '<text x="55" y="330" class="component-label">背景をタップ：場所／生き物をタップ：種類</text>' +
         '</svg>';
       const reason = state.creature === "pillbug"
         ? (state.place === "understone" ? "ダンゴムシは、暗くて湿り気のある石の下などで見つかりやすいね。" : "別の場所も調べ、暗さや湿り気との関係を比べよう。")
@@ -98,6 +99,36 @@
       });
       view.setTrial({ condition: creatureData.label + "・" + placeData.label, result: "見つかりやすさ " + found + " / 10" });
     }
+    const livingStage = view.stage;
+    const nextPlace = () => {
+      const order = ["understone", "flowers", "bare"];
+      state.place = order[(order.indexOf(state.place) + 1) % order.length];
+      place.set(state.place);
+      if (view.markTried) view.markTried();
+      draw();
+    };
+    const toggleCreature = () => {
+      state.creature = state.creature === "pillbug" ? "butterfly" : "pillbug";
+      creature.set(state.creature);
+      if (view.markTried) view.markTried();
+      draw();
+    };
+    livingStage.addEventListener("click", event => {
+      if (!event.target.closest) return;
+      if (event.target.closest(".living-creature-target")) toggleCreature();
+      else if (event.target.closest(".living-habitat-target")) nextPlace();
+    });
+    livingStage.addEventListener("keydown", event => {
+      if (!event.target.closest || !["Enter", " "].includes(event.key)) return;
+      const target = event.target.closest(".living-creature-target, .living-habitat-target");
+      if (!target) return;
+      event.preventDefault();
+      if (target.classList.contains("living-creature-target")) toggleCreature();
+      else nextPlace();
+      const selector = target.classList.contains("living-creature-target") ? ".living-creature-target" : ".living-habitat-target";
+      const handle = livingStage.querySelector(selector);
+      if (handle) handle.focus();
+    });
     return {
       render: draw,
       reset: () => { state.creature = "pillbug"; state.place = "understone"; creature.set(state.creature); place.set(state.place); draw(); },
@@ -146,7 +177,7 @@
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="' + data.label + 'の育ち方と体のつくりのシミュレーション">' +
           '<rect width="640" height="360" fill="#f2faed"/><rect y="274" width="640" height="86" fill="#b99a72"/>' +
           '<text x="28" y="42" class="scene-title">時間がたつと、どこが変わる？</text><text x="30" y="80" class="scene-caption">' + data.label + '・' + state.day + '日目・' + stageName + '</text>' +
-          (state.day === 0 ? '<ellipse cx="320" cy="268" rx="24" ry="12" fill="#8e6b42"/>' : '<path class="sim-plant-stem" d="M320 274 V' + (274 - height) + '" stroke="' + data.stem + '" stroke-width="12" stroke-linecap="round"/>' + leafMarks + flower + fruit) +
+          '<g class="plant-growth-target drag-handle" role="slider" tabindex="0" aria-label="植物を上下に動かして育ちの日数を調整" aria-valuemin="0" aria-valuemax="63" aria-valuenow="' + state.day + '">' + (state.day === 0 ? '<ellipse cx="320" cy="268" rx="24" ry="12" fill="#8e6b42"/>' : '<path class="sim-plant-stem" d="M320 274 V' + (274 - height) + '" stroke="' + data.stem + '" stroke-width="12" stroke-linecap="round"/>' + leafMarks + flower + fruit) + '</g>' +
           roots + labels +
         '</svg>';
       core.renderReadout(view.readout, {
@@ -161,6 +192,52 @@
       });
       view.setTrial({ condition: data.label + "・" + state.day + "日目", result: stageName + "・葉 " + leaves + "枚" });
     }
+    let draggingPlantGrowth = false;
+    let plantStartY = 0;
+    let plantStartDay = state.day;
+    const plantStage = view.stage;
+    plantStage.addEventListener("pointerdown", event => {
+      const handle = event.target.closest && event.target.closest(".plant-growth-target");
+      if (!handle) return;
+      const point = svgPoint(plantStage.querySelector("svg"), event);
+      if (!point) return;
+      plantStartY = point.y;
+      plantStartDay = state.day;
+      draggingPlantGrowth = true;
+      if (plantStage.setPointerCapture) {
+        try { plantStage.setPointerCapture(event.pointerId); }
+        catch (_) { draggingPlantGrowth = false; return; }
+      }
+      plantStage.classList.add("is-direct-manipulating");
+      event.preventDefault();
+    });
+    plantStage.addEventListener("pointermove", event => {
+      if (!draggingPlantGrowth) return;
+      const point = svgPoint(plantStage.querySelector("svg"), event);
+      if (!point) return;
+      const dayDelta = (plantStartY - point.y) * 0.45;
+      state.day = clamp(Math.round((plantStartDay + dayDelta) / 7) * 7, 0, 63);
+      day.set(state.day);
+      draw();
+    });
+    const stopDraggingPlant = () => {
+      if (draggingPlantGrowth && view.markTried) view.markTried();
+      draggingPlantGrowth = false;
+      plantStage.classList.remove("is-direct-manipulating");
+    };
+    plantStage.addEventListener("pointerup", stopDraggingPlant);
+    plantStage.addEventListener("pointercancel", stopDraggingPlant);
+    plantStage.addEventListener("lostpointercapture", stopDraggingPlant);
+    plantStage.addEventListener("keydown", event => {
+      if (!event.target.closest || !event.target.closest(".plant-growth-target") || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
+      event.preventDefault();
+      state.day = clamp(state.day + (event.key === "ArrowUp" ? 7 : -7), 0, 63);
+      day.set(state.day);
+      if (view.markTried) view.markTried();
+      draw();
+      const handle = plantStage.querySelector(".plant-growth-target");
+      if (handle) handle.focus();
+    });
     return {
       render: draw,
       stepLabel: "7日進める",
@@ -190,8 +267,9 @@
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="昆虫の育ち方と体のつくりのシミュレーション">' +
           '<rect width="640" height="360" fill="#fff7ed"/><text x="28" y="42" class="scene-title">育ちの順序と体のつくり</text><text x="30" y="80" class="scene-caption">' + (state.kind === "butterfly" ? "チョウ" : "バッタ") + "：" + name + '</text>' +
-          (state.kind === "butterfly" ? '<path d="M100 285 H540" stroke="#c4a56e" stroke-width="4" stroke-dasharray="8 9"/><circle cx="130" cy="285" r="14" fill="#e7d28f"/><circle cx="280" cy="285" r="14" fill="#78b86b"/><circle cx="410" cy="285" r="14" fill="#9c8561"/><circle cx="520" cy="285" r="14" fill="#e9b8d0"/><text x="112" y="320" class="component-label">卵</text><text x="255" y="320" class="component-label">幼虫</text><text x="370" y="320" class="component-label">さなぎ</text><text x="495" y="320" class="component-label">成虫</text>' : '<path d="M120 285 H520" stroke="#c4a56e" stroke-width="4" stroke-dasharray="8 9"/><circle cx="150" cy="285" r="14" fill="#e7d28f"/><circle cx="320" cy="285" r="14" fill="#78b86b"/><circle cx="500" cy="285" r="14" fill="#91b86d"/><text x="132" y="320" class="component-label">卵</text><text x="295" y="320" class="component-label">幼虫</text><text x="475" y="320" class="component-label">成虫</text>') + '<g class="life-stage-figure">' + figure + '</g>' +
+          (state.kind === "butterfly" ? '<path d="M100 285 H540" stroke="#c4a56e" stroke-width="4" stroke-dasharray="8 9"/><circle cx="130" cy="285" r="14" fill="#e7d28f"/><circle cx="280" cy="285" r="14" fill="#78b86b"/><circle cx="410" cy="285" r="14" fill="#9c8561"/><circle cx="520" cy="285" r="14" fill="#e9b8d0"/><text x="112" y="320" class="component-label">卵</text><text x="255" y="320" class="component-label">幼虫</text><text x="370" y="320" class="component-label">さなぎ</text><text x="495" y="320" class="component-label">成虫</text>' : '<path d="M120 285 H520" stroke="#c4a56e" stroke-width="4" stroke-dasharray="8 9"/><circle cx="150" cy="285" r="14" fill="#e7d28f"/><circle cx="320" cy="285" r="14" fill="#78b86b"/><circle cx="500" cy="285" r="14" fill="#91b86d"/><text x="132" y="320" class="component-label">卵</text><text x="295" y="320" class="component-label">幼虫</text><text x="475" y="320" class="component-label">成虫</text>') + '<g class="life-stage-figure scene-tap-target" role="button" tabindex="0" aria-label="昆虫をタップして次の育ちの段階へ進める">' + figure + '</g>' +
           '<text x="410" y="120" class="component-label">' + bodyText + '</text>' +
+          '<text x="240" y="345" class="tiny-label">昆虫をタップして次の段階へ</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
         metrics: [
@@ -202,6 +280,25 @@
       });
       view.setTrial({ condition: state.kind === "butterfly" ? "チョウ" : "バッタ", result: state.kind === "butterfly" ? "卵→幼虫→さなぎ→成虫" : "卵→幼虫→成虫" });
     }
+    const insectStage = view.stage;
+    const advanceLifeStage = () => {
+      const max = state.kind === "butterfly" ? 3 : 2;
+      state.stage = state.stage >= max ? 0 : state.stage + 1;
+      stage.set(state.stage);
+      if (view.markTried) view.markTried();
+      draw();
+    };
+    insectStage.addEventListener("click", event => {
+      if (!event.target.closest || !event.target.closest(".life-stage-figure")) return;
+      advanceLifeStage();
+    });
+    insectStage.addEventListener("keydown", event => {
+      if (!event.target.closest || !event.target.closest(".life-stage-figure") || !["Enter", " "].includes(event.key)) return;
+      event.preventDefault();
+      advanceLifeStage();
+      const handle = insectStage.querySelector(".life-stage-figure");
+      if (handle) handle.focus();
+    });
     return {
       render: draw,
       stepLabel: "育ちを1段階進める",
@@ -685,8 +782,8 @@
       const object = state.shape === "round" ? '<circle class="weight-object" cx="320" cy="185" r="58" fill="' + ({clay:"#c98268",wood:"#b88d57",iron:"#9ca7ac"}[state.material]) + '" stroke="#6c777b" stroke-width="4"/>' : '<rect class="weight-object" x="245" y="145" width="150" height="80" rx="10" fill="' + ({clay:"#c98268",wood:"#b88d57",iron:"#9ca7ac"}[state.material]) + '" stroke="#6c777b" stroke-width="4"/>';
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="形と材料による物の重さのシミュレーション">' +
-          '<rect width="640" height="360" fill="#f0f4f6"/><text x="28" y="42" class="scene-title">形を変えると、重さは？</text><text x="30" y="80" class="scene-caption">' + (state.shape === "round" ? "丸い形" : "平らな形") + "・" + ({clay:"粘土",wood:"木",iron:"鉄"}[state.material]) + "・" + state.amount + 'こ分</text>' +
-          '<path d="M185 285 H455 M320 285 V305" stroke="#607483" stroke-width="6"/><path d="M220 310 H420" stroke="#607483" stroke-width="5"/><path d="M250 300 l-32 28 M390 300 l32 28" stroke="#607483" stroke-width="4"/>' + object +
+          '<rect width="640" height="360" fill="#f0f4f6"/><text x="28" y="42" class="scene-title">形を変えると、重さは？</text><text x="30" y="80" class="scene-caption">' + (state.shape === "round" ? "丸い形" : "平らな形") + "・" + ({clay:"粘土",wood:"木",iron:"鉄"}[state.material]) + "・" + state.amount + 'こ分</text>' + '<text x="280" y="112" class="tiny-label">物をタップして形を変えよう</text>' +
+          '<path d="M185 285 H455 M320 285 V305" stroke="#607483" stroke-width="6"/><path d="M220 310 H420" stroke="#607483" stroke-width="5"/><path d="M250 300 l-32 28 M390 300 l32 28" stroke="#607483" stroke-width="4"/>' + '<g class="weight-object-target scene-tap-target" role="button" tabindex="0" aria-label="物の形を丸い形と平らな形で切り替える">' + object + '</g>' +
           '<text x="125" y="335" class="component-label">同じ材料・同じ量なら、形を変えても重さは同じ</text><text x="440" y="185" class="component-label">' + weightValue + 'g</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
@@ -699,6 +796,24 @@
       });
       view.setTrial({ condition: ({clay:"粘土",wood:"木",iron:"鉄"}[state.material]) + "・" + (state.shape === "round" ? "丸い" : "平ら") + "・" + state.amount + "こ分", result: weightValue + "g" });
     }
+    const weightStage = view.stage;
+    const toggleShape = () => {
+      state.shape = state.shape === "round" ? "flat" : "round";
+      shape.set(state.shape);
+      if (view.markTried) view.markTried();
+      draw();
+    };
+    weightStage.addEventListener("click", event => {
+      if (!event.target.closest || !event.target.closest(".weight-object-target")) return;
+      toggleShape();
+    });
+    weightStage.addEventListener("keydown", event => {
+      if (!event.target.closest || !event.target.closest(".weight-object-target") || !["Enter", " "].includes(event.key)) return;
+      event.preventDefault();
+      toggleShape();
+      const handle = weightStage.querySelector(".weight-object-target");
+      if (handle) handle.focus();
+    });
     return {
       render: draw,
       reset: () => { state.shape = "round"; state.material = "clay"; state.amount = 1; shape.set(state.shape); material.set(state.material); amount.set(state.amount); draw(); },
