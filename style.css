@@ -523,3 +523,52 @@ body{background:radial-gradient(circle at 95% 0,#cfeef7 0 14rem,transparent 14re
 /* Tap targets for the remaining interactive experiment scenes. */
 .instant-lab .scene-tap-target{cursor:pointer;touch-action:manipulation;outline:none}
 .instant-lab .scene-tap-target:focus-visible{filter:drop-shadow(0 0 4px #176b91)}
+
+
+/* Tablet-first experiment layout: give the experiment the whole row. */
+@media (min-width: 761px) and (max-width: 1180px) {
+  main.lab-main {
+    width: min(100% - 28px, 1120px);
+  }
+  .instant-lab .lab-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+  .instant-lab .simulation-column {
+    width: 100%;
+  }
+  .instant-lab .sim-stage {
+    min-height: 0;
+    padding: 0;
+  }
+  .instant-lab .sim-stage svg {
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    height: auto;
+  }
+  .instant-lab .control-panel {
+    max-height: none;
+    overflow: visible;
+    padding: clamp(18px, 2.5vw, 28px);
+  }
+  .instant-lab .control-section {
+    padding: clamp(14px, 2vw, 22px);
+  }
+  .instant-lab .sim-readout {
+    padding: 18px clamp(18px, 2.5vw, 30px);
+  }
+  .instant-lab .sim-actions {
+    padding: 0 clamp(18px, 2.5vw, 30px) 20px;
+  }
+}
+
+/* On tablets in portrait, keep the drawing large and the controls below it. */
+@media (min-width: 761px) and (max-width: 900px) {
+  .instant-lab .sim-readout-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .instant-lab .instant-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
