@@ -507,3 +507,9 @@ body{background:radial-gradient(circle at 95% 0,#cfeef7 0 14rem,transparent 14re
   .experiment-counter.is-bumped{animation:none}
   .instant-lab .sim-actions .randomize-button:active{transform:none}
 }
+
+
+/* Direct manipulation: make the objects feel draggable on touch screens. */
+.instant-lab .drag-handle{cursor:grab;touch-action:none;outline:none}
+.instant-lab .drag-handle:active{cursor:grabbing;filter:drop-shadow(0 4px 3px rgba(25,70,90,.28))}
+.instant-lab .drag-handle:focus-visible{filter:drop-shadow(0 0 4px #176b91);outline:none}
