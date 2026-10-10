@@ -79,11 +79,12 @@
           ? '<path d="M105 270 Q150 150 195 270 M220 270 Q270 135 320 270 M350 270 Q405 145 460 270" fill="none" stroke="#4f934b" stroke-width="11" stroke-linecap="round"/><circle cx="150" cy="164" r="18" fill="#f0a3b3"/><circle cx="270" cy="150" r="18" fill="#f2c955"/><circle cx="405" cy="160" r="18" fill="#a9a1df"/>'
           : '<path d="M90 265 Q180 245 270 265 T450 260 T570 267" fill="none" stroke="#ad9365" stroke-width="5"/>';
       view.stage.innerHTML =
-        '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="' + creatureData.label + 'を' + placeData.label + 'で探すシミュレーション">' +
+        '<svg class="extra-svg" viewBox="0 0 640 360" role="group" aria-label="' + creatureData.label + 'を' + placeData.label + 'で探すシミュレーション">' +
           '<rect width="640" height="360" fill="#edf7ee"/><rect y="270" width="640" height="90" fill="' + placeData.ground + '"/>' +
           '<text x="28" y="42" class="scene-title">どんな場所で見つかる？</text><text x="30" y="80" class="scene-caption">' + creatureData.label + 'を「' + placeData.label + '」でさがす</text>' +
-          scene + marks +
-          '<text x="55" y="330" class="component-label">場所と生き物を一つずつ変えてくらべよう</text>' +
+          '<g class="living-habitat-target scene-tap-target" role="button" tabindex="0" aria-label="場所を切り替える"><rect x="18" y="110" width="604" height="166" fill="#fff" fill-opacity="0.001"/>' + scene + '</g>' +
+          '<g class="living-creature-target scene-tap-target" role="button" tabindex="0" aria-label="さがす生き物を切り替える">' + marks + '</g>' +
+          '<text x="55" y="330" class="component-label">背景をタップ：場所／生き物をタップ：種類</text>' +
         '</svg>';
       const reason = state.creature === "pillbug"
         ? (state.place === "understone" ? "ダンゴムシは、暗くて湿り気のある石の下などで見つかりやすいね。" : "別の場所も調べ、暗さや湿り気との関係を比べよう。")
@@ -98,6 +99,36 @@
       });
       view.setTrial({ condition: creatureData.label + "・" + placeData.label, result: "見つかりやすさ " + found + " / 10" });
     }
+    const livingStage = view.stage;
+    const nextPlace = () => {
+      const order = ["understone", "flowers", "bare"];
+      state.place = order[(order.indexOf(state.place) + 1) % order.length];
+      place.set(state.place);
+      if (view.markTried) view.markTried();
+      draw();
+    };
+    const toggleCreature = () => {
+      state.creature = state.creature === "pillbug" ? "butterfly" : "pillbug";
+      creature.set(state.creature);
+      if (view.markTried) view.markTried();
+      draw();
+    };
+    livingStage.addEventListener("click", event => {
+      if (!event.target.closest) return;
+      if (event.target.closest(".living-creature-target")) toggleCreature();
+      else if (event.target.closest(".living-habitat-target")) nextPlace();
+    });
+    livingStage.addEventListener("keydown", event => {
+      if (!event.target.closest || !["Enter", " "].includes(event.key)) return;
+      const target = event.target.closest(".living-creature-target, .living-habitat-target");
+      if (!target) return;
+      event.preventDefault();
+      if (target.classList.contains("living-creature-target")) toggleCreature();
+      else nextPlace();
+      const selector = target.classList.contains("living-creature-target") ? ".living-creature-target" : ".living-habitat-target";
+      const handle = livingStage.querySelector(selector);
+      if (handle) handle.focus();
+    });
     return {
       render: draw,
       reset: () => { state.creature = "pillbug"; state.place = "understone"; creature.set(state.creature); place.set(state.place); draw(); },
@@ -143,10 +174,10 @@
         ? '<path d="M350 170 H430" stroke="#607483" stroke-width="2"/><text x="440" y="176" class="component-label">葉</text><path d="M329 225 H430" stroke="#607483" stroke-width="2"/><text x="440" y="231" class="component-label">茎</text>'
         : '<text x="90" y="326" class="component-label">種 → 芽 → 葉がふえる → 花 → 実</text>';
       view.stage.innerHTML =
-        '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="' + data.label + 'の育ち方と体のつくりのシミュレーション">' +
+        '<svg class="extra-svg" viewBox="0 0 640 360" role="group" aria-label="' + data.label + 'の育ち方と体のつくりのシミュレーション">' +
           '<rect width="640" height="360" fill="#f2faed"/><rect y="274" width="640" height="86" fill="#b99a72"/>' +
-          '<text x="28" y="42" class="scene-title">時間がたつと、どこが変わる？</text><text x="30" y="80" class="scene-caption">' + data.label + '・' + state.day + '日目・' + stageName + '</text>' +
-          (state.day === 0 ? '<ellipse cx="320" cy="268" rx="24" ry="12" fill="#8e6b42"/>' : '<path class="sim-plant-stem" d="M320 274 V' + (274 - height) + '" stroke="' + data.stem + '" stroke-width="12" stroke-linecap="round"/>' + leafMarks + flower + fruit) +
+          '<text x="28" y="42" class="scene-title">時間がたつと、どこが変わる？</text><text x="30" y="80" class="scene-caption">' + data.label + '・' + state.day + '日目・' + stageName + '</text><text x="28" y="110" class="tiny-label">植物を上にドラッグすると育ちが進むよ</text>' +
+          '<g class="plant-growth-target drag-handle" role="slider" tabindex="0" aria-label="植物を上下に動かして育ちの日数を調整" aria-valuemin="0" aria-valuemax="63" aria-valuenow="' + state.day + '">' + (state.day === 0 ? '<ellipse cx="320" cy="268" rx="24" ry="12" fill="#8e6b42"/>' : '<path class="sim-plant-stem" d="M320 274 V' + (274 - height) + '" stroke="' + data.stem + '" stroke-width="12" stroke-linecap="round"/>' + leafMarks + flower + fruit) + '</g>' +
           roots + labels +
         '</svg>';
       core.renderReadout(view.readout, {
@@ -161,6 +192,52 @@
       });
       view.setTrial({ condition: data.label + "・" + state.day + "日目", result: stageName + "・葉 " + leaves + "枚" });
     }
+    let draggingPlantGrowth = false;
+    let plantStartY = 0;
+    let plantStartDay = state.day;
+    const plantStage = view.stage;
+    plantStage.addEventListener("pointerdown", event => {
+      const handle = event.target.closest && event.target.closest(".plant-growth-target");
+      if (!handle) return;
+      const point = svgPoint(plantStage.querySelector("svg"), event);
+      if (!point) return;
+      plantStartY = point.y;
+      plantStartDay = state.day;
+      draggingPlantGrowth = true;
+      if (plantStage.setPointerCapture) {
+        try { plantStage.setPointerCapture(event.pointerId); }
+        catch (_) { draggingPlantGrowth = false; return; }
+      }
+      plantStage.classList.add("is-direct-manipulating");
+      event.preventDefault();
+    });
+    plantStage.addEventListener("pointermove", event => {
+      if (!draggingPlantGrowth) return;
+      const point = svgPoint(plantStage.querySelector("svg"), event);
+      if (!point) return;
+      const dayDelta = (plantStartY - point.y) * 0.45;
+      state.day = clamp(Math.round((plantStartDay + dayDelta) / 7) * 7, 0, 63);
+      day.set(state.day);
+      draw();
+    });
+    const stopDraggingPlant = () => {
+      if (draggingPlantGrowth && view.markTried) view.markTried();
+      draggingPlantGrowth = false;
+      plantStage.classList.remove("is-direct-manipulating");
+    };
+    plantStage.addEventListener("pointerup", stopDraggingPlant);
+    plantStage.addEventListener("pointercancel", stopDraggingPlant);
+    plantStage.addEventListener("lostpointercapture", stopDraggingPlant);
+    plantStage.addEventListener("keydown", event => {
+      if (!event.target.closest || !event.target.closest(".plant-growth-target") || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
+      event.preventDefault();
+      state.day = clamp(state.day + (event.key === "ArrowUp" ? 7 : -7), 0, 63);
+      day.set(state.day);
+      if (view.markTried) view.markTried();
+      draw();
+      const handle = plantStage.querySelector(".plant-growth-target");
+      if (handle) handle.focus();
+    });
     return {
       render: draw,
       stepLabel: "7日進める",
@@ -188,10 +265,11 @@
       else figure = '<ellipse cx="330" cy="190" rx="75" ry="24" fill="#78a45a"/><circle cx="255" cy="184" r="24" fill="#97bc70"/><path d="M290 207 l-55 50 M330 210 l-16 52 M370 207 l55 48" stroke="#536f42" stroke-width="8" stroke-linecap="round"/><path d="M260 163 l-35 -35 M270 165 l12 -46" stroke="#536f42" stroke-width="4"/>';
       const bodyText = adult ? "頭・胸・腹、胸から6本の足" : "成長の途中";
       view.stage.innerHTML =
-        '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="昆虫の育ち方と体のつくりのシミュレーション">' +
+        '<svg class="extra-svg" viewBox="0 0 640 360" role="group" aria-label="昆虫の育ち方と体のつくりのシミュレーション">' +
           '<rect width="640" height="360" fill="#fff7ed"/><text x="28" y="42" class="scene-title">育ちの順序と体のつくり</text><text x="30" y="80" class="scene-caption">' + (state.kind === "butterfly" ? "チョウ" : "バッタ") + "：" + name + '</text>' +
-          (state.kind === "butterfly" ? '<path d="M100 285 H540" stroke="#c4a56e" stroke-width="4" stroke-dasharray="8 9"/><circle cx="130" cy="285" r="14" fill="#e7d28f"/><circle cx="280" cy="285" r="14" fill="#78b86b"/><circle cx="410" cy="285" r="14" fill="#9c8561"/><circle cx="520" cy="285" r="14" fill="#e9b8d0"/><text x="112" y="320" class="component-label">卵</text><text x="255" y="320" class="component-label">幼虫</text><text x="370" y="320" class="component-label">さなぎ</text><text x="495" y="320" class="component-label">成虫</text>' : '<path d="M120 285 H520" stroke="#c4a56e" stroke-width="4" stroke-dasharray="8 9"/><circle cx="150" cy="285" r="14" fill="#e7d28f"/><circle cx="320" cy="285" r="14" fill="#78b86b"/><circle cx="500" cy="285" r="14" fill="#91b86d"/><text x="132" y="320" class="component-label">卵</text><text x="295" y="320" class="component-label">幼虫</text><text x="475" y="320" class="component-label">成虫</text>') + '<g class="life-stage-figure">' + figure + '</g>' +
+          (state.kind === "butterfly" ? '<path d="M100 285 H540" stroke="#c4a56e" stroke-width="4" stroke-dasharray="8 9"/><circle cx="130" cy="285" r="14" fill="#e7d28f"/><circle cx="280" cy="285" r="14" fill="#78b86b"/><circle cx="410" cy="285" r="14" fill="#9c8561"/><circle cx="520" cy="285" r="14" fill="#e9b8d0"/><text x="112" y="320" class="component-label">卵</text><text x="255" y="320" class="component-label">幼虫</text><text x="370" y="320" class="component-label">さなぎ</text><text x="495" y="320" class="component-label">成虫</text>' : '<path d="M120 285 H520" stroke="#c4a56e" stroke-width="4" stroke-dasharray="8 9"/><circle cx="150" cy="285" r="14" fill="#e7d28f"/><circle cx="320" cy="285" r="14" fill="#78b86b"/><circle cx="500" cy="285" r="14" fill="#91b86d"/><text x="132" y="320" class="component-label">卵</text><text x="295" y="320" class="component-label">幼虫</text><text x="475" y="320" class="component-label">成虫</text>') + '<g class="life-stage-figure scene-tap-target" role="button" tabindex="0" aria-label="昆虫をタップして次の育ちの段階へ進める">' + figure + '</g>' +
           '<text x="410" y="120" class="component-label">' + bodyText + '</text>' +
+          '<text x="240" y="345" class="tiny-label">昆虫をタップして次の段階へ</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
         metrics: [
@@ -202,6 +280,25 @@
       });
       view.setTrial({ condition: state.kind === "butterfly" ? "チョウ" : "バッタ", result: state.kind === "butterfly" ? "卵→幼虫→さなぎ→成虫" : "卵→幼虫→成虫" });
     }
+    const insectStage = view.stage;
+    const advanceLifeStage = () => {
+      const max = state.kind === "butterfly" ? 3 : 2;
+      state.stage = state.stage >= max ? 0 : state.stage + 1;
+      stage.set(state.stage);
+      if (view.markTried) view.markTried();
+      draw();
+    };
+    insectStage.addEventListener("click", event => {
+      if (!event.target.closest || !event.target.closest(".life-stage-figure")) return;
+      advanceLifeStage();
+    });
+    insectStage.addEventListener("keydown", event => {
+      if (!event.target.closest || !event.target.closest(".life-stage-figure") || !["Enter", " "].includes(event.key)) return;
+      event.preventDefault();
+      advanceLifeStage();
+      const handle = insectStage.querySelector(".life-stage-figure");
+      if (handle) handle.focus();
+    });
     return {
       render: draw,
       stepLabel: "育ちを1段階進める",
@@ -220,7 +317,7 @@
       const carX = 92 + distance * 2.0;
       const arrows = state.source === "wind" ? '<path class="force-arrow" d="M105 150 H250 M130 125 H300 M170 175 H330" stroke="#5aa6b4" stroke-width="9" stroke-linecap="round"/><path class="force-arrow" d="M240 140 l25 10 -25 10 M290 115 l25 10 -25 10 M320 165 l25 10 -25 10" fill="none" stroke="#327b8b" stroke-width="6"/>' : '<path class="rubber-stretch" d="M110 150 Q165 110 220 150 T330 150" fill="none" stroke="#bd5550" stroke-width="7"/><path class="force-arrow" d="M110 150 H' + (110 + state.force * .8) + '" stroke="#bd5550" stroke-width="5"/>';
       view.stage.innerHTML =
-        '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="風やゴムの力と車の移動距離のシミュレーション">' +
+        '<svg class="extra-svg" viewBox="0 0 640 360" role="group" aria-label="風やゴムの力と車の移動距離のシミュレーション">' +
           '<rect width="640" height="360" fill="#eef8fa"/><text x="28" y="42" class="scene-title">力を大きくすると、車は？</text><text x="30" y="80" class="scene-caption">' + (state.source === "wind" ? "風の強さ" : "ゴムの伸び") + " " + state.force + '%</text><text x="30" y="105" class="tiny-label">車をつかんで左右に動かそう</text>' + arrows +
           '<path d="M70 270 H570" stroke="#78949a" stroke-width="5"/><path d="M70 287 H570" stroke="#c5d9d9" stroke-width="2"/><g class="sim-car drag-handle" role="slider" tabindex="0" aria-label="車を左右に動かして力を調整" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + state.force + '"><rect x="' + carX + '" y="230" width="72" height="35" rx="10" fill="#27849b"/><circle cx="' + (carX + 16) + '" cy="270" r="12" fill="#4b5c62"/><circle cx="' + (carX + 57) + '" cy="270" r="12" fill="#4b5c62"/></g><text x="80" y="320" class="component-label">0cm</text><text x="490" y="320" class="component-label">200cm</text><line class="distance-line" x1="92" y1="305" x2="' + (92 + distance * 2.0) + '" y2="305" stroke="#27849b" stroke-width="6"/>' +
         '</svg>';
@@ -309,7 +406,7 @@
         return (i === 0 ? "M" : " L") + x + " " + y;
       }).join("");
       view.stage.innerHTML =
-        '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="音の大きさとふるえのシミュレーション">' +
+        '<svg class="extra-svg" viewBox="0 0 640 360" role="group" aria-label="音の大きさとふるえのシミュレーション">' +
           '<rect width="640" height="360" fill="#f7f1fb"/><text x="28" y="42" class="scene-title">音が大きいと、ふるえは？</text><text x="30" y="80" class="scene-caption">' + (state.medium === "rubber" ? "輪ゴム" : "太鼓") + "・強さ " + state.strength + '%</text>' +
           '<g class="sound-source drag-handle" role="button" tabindex="0" aria-label="' + (state.medium === "rubber" ? "輪ゴム" : "太鼓") + 'をタップしてふるえを変える">' + sourceDrawing + '</g><text x="350" y="116" class="tiny-label">音を出す物をタップ</text><path class="sound-wave" d="' + wave + '" fill="none" stroke="#8a64a7" stroke-width="7" stroke-linecap="round"/><line x1="165" y1="175" x2="480" y2="175" stroke="#c7b6d5" stroke-width="2" stroke-dasharray="6 7"/>' +
           '<circle class="sound-receiver" cx="535" cy="175" r="' + (18 + transmission * .18) + '" fill="#e5c8ee" stroke="#8a64a7" stroke-width="4"/><path class="sound-rings" d="M570 140 Q620 175 570 210 M590 125 Q650 175 590 225" fill="none" stroke="#8a64a7" stroke-width="5" opacity="' + (transmission / 100) + '"/><text x="110" y="280" class="component-label">音を出す物のふるえ：' + vibration + ' / 100</text><text x="405" y="320" class="component-label">糸で伝わる強さ：' + transmission + '</text>' +
@@ -365,7 +462,7 @@
       const shadowEnd = 330 + shadowDirection * shadowLength;
       const shadowSide = state.time < 12 ? "西がわ" : state.time > 12 ? "東がわ" : "短い影";
       view.stage.innerHTML =
-        '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="太陽の位置と影のシミュレーション">' +
+        '<svg class="extra-svg" viewBox="0 0 640 360" role="group" aria-label="太陽の位置と影のシミュレーション">' +
           '<rect width="640" height="360" fill="#fff7e8"/><rect y="280" width="640" height="80" fill="#d6c38d"/><circle class="moving-sun drag-handle" role="slider" tabindex="0" aria-label="太陽を左右に動かして時刻を調整" aria-valuemin="8" aria-valuemax="16" aria-valuenow="' + state.time + '" cx="' + sunX + '" cy="' + (270 - height) + '" r="28" fill="#f5c84d"/><text x="28" y="42" class="scene-title">太陽の位置が変わると、影は？</text><text x="30" y="80" class="scene-caption">' + state.time + "時ごろ・" + (state.target === "shadow" ? "影に注目" : "地面の温度に注目") + '</text><text x="72" y="118" class="component-label">東</text><text x="548" y="118" class="component-label">西</text>' +
           '<text x="190" y="346" class="tiny-label">太陽を左右に動かそう</text><rect x="322" y="180" width="16" height="100" fill="#806d51"/><path class="moving-shadow" d="M330 280 L' + shadowEnd + ' 280 L' + (shadowEnd - shadowDirection * 10) + ' 270 Z" fill="#8e836d" opacity=".75"/><text x="105" y="320" class="component-label">影：' + shadowSide + '・' + shadowLength + 'cm</text><text x="430" y="320" class="component-label">日なたの地面 ' + temp + '℃</text>' +
         '</svg>';
@@ -461,7 +558,7 @@
       }).join("");
       const rings = Array.from({ length: state.mirrors }, (_, i) => '<circle cx="' + wallX + '" cy="' + targetY + '" r="' + (17 + i * 8) + '" fill="none" stroke="#f7d75a" stroke-width="4" opacity="' + (.7 - i * .16) + '"/>').join("");
       view.stage.innerHTML =
-        '<svg class="extra-svg light-lab-svg" viewBox="0 0 640 360" role="img" aria-label="懐中電灯の光が鏡ではね返り壁へ届く道すじ">' +
+        '<svg class="extra-svg light-lab-svg" viewBox="0 0 640 360" role="group" aria-label="懐中電灯の光が鏡ではね返り壁へ届く道すじ">' +
           '<defs><marker id="rayArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#d99a16"/></marker><radialGradient id="lightSpot"><stop offset="0" stop-color="#fff9ba" stop-opacity="1"/><stop offset=".55" stop-color="#f8dc60" stop-opacity=".8"/><stop offset="1" stop-color="#f8dc60" stop-opacity="0"/></radialGradient></defs>' +
           '<rect width="640" height="360" fill="#fffbea"/><text x="28" y="38" class="scene-title">光の道すじを線でたどろう</text><text x="30" y="72" class="scene-caption">鏡 ' + state.mirrors + '枚 → 壁の' + targetZone + 'に届く</text>' +
           '<text x="30" y="100" class="tiny-label">壁の光を上下に動かそう</text><rect x="564" y="82" width="24" height="210" rx="6" fill="#e8e0cf" stroke="#9c8f79" stroke-width="3"/><path d="M590 82 V292" stroke="#c9bda6" stroke-width="2"/>' +
@@ -548,7 +645,7 @@
       const switchPart = state.closed === "closed" ? '<line x1="300" y1="274" x2="360" y2="274" stroke="' + wireColor + '" stroke-width="8" stroke-linecap="round"/>' : '<line x1="300" y1="274" x2="344" y2="244" stroke="#718a91" stroke-width="8" stroke-linecap="round"/>';
       const flowMarks = lit ? [[130,115],[340,115],[510,220],[420,274],[210,274]].map((p,i) => '<circle class="circuit-charge" style="--charge-delay:' + (i*.12) + 's" cx="' + p[0] + '" cy="' + p[1] + '" r="6" fill="#f6c846"/>').join("") : "";
       view.stage.innerHTML =
-        '<svg class="extra-svg circuit-diagram" viewBox="0 0 640 360" role="img" aria-label="乾電池、調べる物、豆電球、スイッチが一つの輪につながった回路">' +
+        '<svg class="extra-svg circuit-diagram" viewBox="0 0 640 360" role="group" aria-label="乾電池、調べる物、豆電球、スイッチが一つの輪につながった回路">' +
           '<defs><radialGradient id="bulbLight"><stop offset="0" stop-color="#fff8a6" stop-opacity=".95"/><stop offset="1" stop-color="#f7d75a" stop-opacity="0"/></radialGradient></defs><rect width="640" height="360" fill="#fffaf0"/><text x="28" y="38" class="scene-title">電気の通り道を一周たどろう</text><text x="30" y="74" class="scene-caption">' + (lit ? "切れ目のない一つの輪 → 豆電球がつく" : state.closed === "open" ? "スイッチに切れ目がある" : tested.label + "は電気を通さない") + '</text>' +
           wireSegments +
           '<g><circle cx="190" cy="115" r="10" fill="#d9e1df" stroke="#60777d" stroke-width="3"/><circle cx="270" cy="115" r="10" fill="#d9e1df" stroke="#60777d" stroke-width="3"/><rect x="190" y="94" width="80" height="42" rx="8" fill="' + tested.color + '" stroke="#6e7776" stroke-width="3"/><text x="205" y="121" class="component-label">' + tested.label + '</text><text x="180" y="157" class="tiny-label">調べる物</text></g>' +
@@ -604,7 +701,7 @@
       const rightX = 295 + state.distance * 1.15;
       const arrow = opposite ? '<path d="M280 135 H' + (rightX - 18) + '" stroke="#bd5550" stroke-width="7" marker-end="url(#arrow)"/>' : '<path d="M280 135 H245 M' + (rightX - 18) + ' 135 H' + (rightX + 18) + '" stroke="#607483" stroke-width="7"/>';
       view.stage.innerHTML =
-        '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="磁石の極と材料による動きのシミュレーション">' +
+        '<svg class="extra-svg" viewBox="0 0 640 360" role="group" aria-label="磁石の極と材料による動きのシミュレーション">' +
           '<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#bd5550"/></marker></defs><rect width="640" height="360" fill="#fff1f0"/><text x="28" y="42" class="scene-title">磁石を近づけると、どう動く？</text><text x="30" y="80" class="scene-caption">' + state.poleA + "極と" + state.poleB + "極・距離 " + state.distance + 'cm</text><text x="30" y="205" class="tiny-label">右の磁石をつかんで左右へ</text>' +
           '<g class="magnet-left ' + (opposite ? "attract" : "repel") + '"><rect x="170" y="105" width="110" height="60" rx="12" fill="' + (state.poleA === "N" ? "#db6d67" : "#668bc0") + '"/><text x="216" y="143" fill="#fff" class="component-label">' + state.poleA + '</text></g><g class="magnet-right drag-handle ' + (opposite ? "attract" : "repel") + '" role="slider" tabindex="0" aria-label="右の磁石を左右に動かして距離を調整" aria-valuemin="20" aria-valuemax="100" aria-valuenow="' + state.distance + '"><rect x="' + rightX + '" y="105" width="110" height="60" rx="12" fill="' + (state.poleB === "N" ? "#db6d67" : "#668bc0") + '"/><text x="' + (rightX + 46) + '" y="143" fill="#fff" class="component-label">' + state.poleB + '</text></g>' + arrow +
           '<circle class="magnet-test-object ' + (state.material === "iron" ? "sticks" : "") + '" cx="320" cy="250" r="28" fill="' + (state.material === "iron" ? "#a2abb0" : "#d3c2a0") + '" stroke="#6f7779" stroke-width="4"/><text x="300" y="310" class="component-label">' + (state.material === "iron" ? "鉄" : "アルミ") + "：" + (state.material === "iron" ? "つく" : "つかない") + '</text>' +
@@ -684,9 +781,9 @@
       const weightValue = state.amount * density;
       const object = state.shape === "round" ? '<circle class="weight-object" cx="320" cy="185" r="58" fill="' + ({clay:"#c98268",wood:"#b88d57",iron:"#9ca7ac"}[state.material]) + '" stroke="#6c777b" stroke-width="4"/>' : '<rect class="weight-object" x="245" y="145" width="150" height="80" rx="10" fill="' + ({clay:"#c98268",wood:"#b88d57",iron:"#9ca7ac"}[state.material]) + '" stroke="#6c777b" stroke-width="4"/>';
       view.stage.innerHTML =
-        '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="形と材料による物の重さのシミュレーション">' +
-          '<rect width="640" height="360" fill="#f0f4f6"/><text x="28" y="42" class="scene-title">形を変えると、重さは？</text><text x="30" y="80" class="scene-caption">' + (state.shape === "round" ? "丸い形" : "平らな形") + "・" + ({clay:"粘土",wood:"木",iron:"鉄"}[state.material]) + "・" + state.amount + 'こ分</text>' +
-          '<path d="M185 285 H455 M320 285 V305" stroke="#607483" stroke-width="6"/><path d="M220 310 H420" stroke="#607483" stroke-width="5"/><path d="M250 300 l-32 28 M390 300 l32 28" stroke="#607483" stroke-width="4"/>' + object +
+        '<svg class="extra-svg" viewBox="0 0 640 360" role="group" aria-label="形と材料による物の重さのシミュレーション">' +
+          '<rect width="640" height="360" fill="#f0f4f6"/><text x="28" y="42" class="scene-title">形を変えると、重さは？</text><text x="30" y="80" class="scene-caption">' + (state.shape === "round" ? "丸い形" : "平らな形") + "・" + ({clay:"粘土",wood:"木",iron:"鉄"}[state.material]) + "・" + state.amount + 'こ分</text>' + '<text x="280" y="112" class="tiny-label">物をタップして形を変えよう</text>' +
+          '<path d="M185 285 H455 M320 285 V305" stroke="#607483" stroke-width="6"/><path d="M220 310 H420" stroke="#607483" stroke-width="5"/><path d="M250 300 l-32 28 M390 300 l32 28" stroke="#607483" stroke-width="4"/>' + '<g class="weight-object-target scene-tap-target" role="button" tabindex="0" aria-label="物の形を丸い形と平らな形で切り替える">' + object + '</g>' +
           '<text x="125" y="335" class="component-label">同じ材料・同じ量なら、形を変えても重さは同じ</text><text x="440" y="185" class="component-label">' + weightValue + 'g</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
@@ -699,6 +796,24 @@
       });
       view.setTrial({ condition: ({clay:"粘土",wood:"木",iron:"鉄"}[state.material]) + "・" + (state.shape === "round" ? "丸い" : "平ら") + "・" + state.amount + "こ分", result: weightValue + "g" });
     }
+    const weightStage = view.stage;
+    const toggleShape = () => {
+      state.shape = state.shape === "round" ? "flat" : "round";
+      shape.set(state.shape);
+      if (view.markTried) view.markTried();
+      draw();
+    };
+    weightStage.addEventListener("click", event => {
+      if (!event.target.closest || !event.target.closest(".weight-object-target")) return;
+      toggleShape();
+    });
+    weightStage.addEventListener("keydown", event => {
+      if (!event.target.closest || !event.target.closest(".weight-object-target") || !["Enter", " "].includes(event.key)) return;
+      event.preventDefault();
+      toggleShape();
+      const handle = weightStage.querySelector(".weight-object-target");
+      if (handle) handle.focus();
+    });
     return {
       render: draw,
       reset: () => { state.shape = "round"; state.material = "clay"; state.amount = 1; shape.set(state.shape); material.set(state.material); amount.set(state.amount); draw(); },
