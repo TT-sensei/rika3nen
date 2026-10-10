@@ -9,9 +9,9 @@
     root.innerHTML =
       '<section class="lab-screen instant-lab" style="--lab-accent:' + esc(manifest.accent || "#2a8068") + '">' +
         '<nav class="breadcrumbs" aria-label="現在位置"><button class="text-button" type="button" data-lab-home>シミュレーション一覧</button><span>›</span><span>' + esc(manifest.title) + '</span></nav>' +
-        '<header class="lab-titlebar"><div><p class="eyebrow">SIMULATION LAB / ' + esc(manifest.unit) + '</p><h1>' + esc(manifest.title) + '</h1><p>' + esc(manifest.summary) + '</p></div><button class="secondary-button lab-back" type="button" data-lab-home>一覧へ戻る</button></header>' +
-        '<div class="lab-workspace"><section class="simulation-column" aria-label="シミュレーション"><div class="sim-stage" data-sim-stage></div><div class="sim-readout" data-sim-readout aria-live="polite"></div><div class="sim-actions" data-sim-actions></div></section><aside class="control-panel instant-panel" aria-label="条件操作"><div class="control-heading"><p class="eyebrow">TRY IT</p><h2>条件を変えてみよう</h2><p>一つずつ変えると、ちがいが見つけやすくなります。</p></div><div data-control-panel></div><section class="trial-panel" aria-labelledby="trialTitle"><div class="trial-heading"><h3 id="trialTitle">くらべた結果</h3><button type="button" data-clear-trials>消す</button></div><div class="trial-list" data-trial-list aria-live="polite"><p>「この結果をくらべる」で3回分を並べられます。</p></div></section></aside></div>' +
-        '<p class="model-note" data-model-note></p></section>';
+        '<header class="lab-titlebar"><div><p class="eyebrow">🧪 自由にためす / ' + esc(manifest.unit) + '</p><h1>' + esc(manifest.title) + '</h1></div><div class="experiment-counter" aria-live="polite"><b data-experiment-count>0</b><small>回ためした</small></div><button class="secondary-button lab-back" type="button" data-lab-home>一覧へ戻る</button></header>' +
+        '<div class="lab-workspace"><section class="simulation-column" aria-label="シミュレーション"><div class="sim-stage" data-sim-stage></div><div class="sim-readout" data-sim-readout aria-live="polite"></div><div class="sim-actions" data-sim-actions></div></section><aside class="control-panel instant-panel" aria-label="実験の操作"><div class="control-heading"><p class="eyebrow">TRY & PLAY</p><h2>さわってみよう</h2></div><div data-control-panel></div><details class="trial-panel" aria-labelledby="trialTitle"><summary>📒 実験ノート</summary><div class="trial-heading"><h3 id="trialTitle">くらべた結果</h3><button type="button" data-clear-trials>記録を消す</button></div><div class="trial-list" data-trial-list aria-live="polite"><p>気になる条件を変えて、結果を記録してみよう。</p></div></details></aside></div>' +
+        '<details class="model-disclosure"><summary>このシミュレーションについて</summary><p class="model-note" data-model-note></p></details></section>';
     const view = root.querySelector(".lab-screen");
     const stage = view.querySelector("[data-sim-stage]");
     const cleanups = [];
@@ -38,8 +38,12 @@
       mission.className = "discovery-mission";
       mission.innerHTML = '<div class="mission-heading"><span aria-hidden="true">🔎</span><div><small>はっけんミッション</small><b data-mission-text>' + esc(challenges[0]) + '</b></div></div><div class="mission-dots" role="group" aria-label="ミッションを選ぶ">' +
         challenges.map((item, index) => '<button type="button" aria-pressed="' + (index === 0) + '" data-mission-index="' + index + '">' + (index + 1) + '</button>').join("") + '</div>';
+      const missionDetails = document.createElement("details");
+      missionDetails.className = "mission-details";
+      missionDetails.innerHTML = '<summary>🎯 あそびミッション（やってみたい人）</summary>';
+      missionDetails.append(mission);
       const controlArea = view.querySelector("[data-control-panel]");
-      controlArea.insertAdjacentElement("afterend", mission);
+      controlArea.insertAdjacentElement("afterend", missionDetails);
       mission.querySelectorAll("[data-mission-index]").forEach(button => on(button, "click", () => {
         mission.querySelectorAll("[data-mission-index]").forEach(item => item.setAttribute("aria-pressed", String(item === button)));
         mission.querySelector("[data-mission-text]").textContent = challenges[Number(button.dataset.missionIndex)];
@@ -55,6 +59,25 @@
       window.setTimeout(() => spark.remove(), 520);
     });
     const trialList = view.querySelector("[data-trial-list]");
+    let experimentCount = 0;
+    const experimentCountOutput = view.querySelector("[data-experiment-count]");
+    const markTried = () => {
+      experimentCount += 1;
+      if (experimentCountOutput) experimentCountOutput.textContent = String(experimentCount);
+      const counter = view.querySelector(".experiment-counter");
+      if (counter) {
+        counter.classList.remove("is-bumped");
+        void counter.offsetWidth;
+        counter.classList.add("is-bumped");
+      }
+    };
+    const controlArea = view.querySelector("[data-control-panel]");
+    on(controlArea, "change", event => {
+      if (event.target && event.target.matches('input[type="range"]')) markTried();
+    });
+    on(controlArea, "click", event => {
+      if (event.target && event.target.closest(".segmented-control button")) markTried();
+    });
     let trialDraft = null;
     let trials = [];
     const changedParts = (newer, older) => {
@@ -79,6 +102,7 @@
       panel: view.querySelector("[data-control-panel]"),
       note: view.querySelector("[data-model-note]"),
       setTrial: trial => { trialDraft = trial; },
+      markTried,
       saveTrial: () => {
         if (!trialDraft) return false;
         const duplicate = trials[0] && trials[0].condition === trialDraft.condition && trials[0].result === trialDraft.result;
@@ -154,6 +178,30 @@
     return wrap;
   }
 
+  function randomizeOne(view) {
+    const candidates = [];
+    Array.from(view.panel.querySelectorAll(".range-control input")).forEach(input => {
+      const min = Number(input.min), max = Number(input.max), step = Number(input.step) || 1;
+      const count = Math.floor((max - min) / step);
+      if (!(count > 0)) return;
+      candidates.push(() => {
+        const current = Math.max(0, Math.min(count, Math.round((Number(input.value) - min) / step)));
+        let next = Math.floor(Math.random() * (count + 1));
+        if (next === current) next = (next + 1 + Math.floor(Math.random() * count)) % (count + 1);
+        input.value = String(min + next * step);
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+    });
+    Array.from(view.panel.querySelectorAll(".segmented-control")).forEach(group => {
+      const alternatives = Array.from(group.querySelectorAll("button")).filter(button => button.getAttribute("aria-pressed") !== "true");
+      if (alternatives.length) candidates.push(() => alternatives[Math.floor(Math.random() * alternatives.length)].click());
+    });
+    if (!candidates.length) return false;
+    candidates[Math.floor(Math.random() * candidates.length)]();
+    return true;
+  }
+
   function renderReadout(target, config) {
     const metrics = config.metrics || [];
     target.innerHTML = '<div class="instant-readout-grid">' + metrics.map(metric =>
@@ -165,5 +213,5 @@
     root.innerHTML = '<section class="empty-state lab-error"><h1>LABを読み込めませんでした</h1><p>' + esc(message || "画面を更新して、もう一度試してください。") + '</p><button class="primary-button" type="button" data-lab-home>シミュレーション一覧へ</button></section>';
   }
 
-  window.RikaThreeLabCore = { esc, shell, section, range, options, action, presets, renderReadout, renderError };
+  window.RikaThreeLabCore = { esc, shell, section, range, options, action, presets, randomizeOne, renderReadout, renderError };
 })();
