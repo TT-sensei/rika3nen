@@ -250,6 +250,7 @@
         try { stage.setPointerCapture(event.pointerId); }
         catch (_) { draggingCar = false; return; }
       }
+      stage.classList.add("is-direct-manipulating");
       event.preventDefault();
     });
     stage.addEventListener("pointermove", event => {
@@ -263,7 +264,11 @@
       force.set(state.force);
       draw();
     });
-    const stopDraggingCar = () => { if (draggingCar && view.markTried) view.markTried(); draggingCar = false; };
+    const stopDraggingCar = () => {
+      if (draggingCar && view.markTried) view.markTried();
+      draggingCar = false;
+      stage.classList.remove("is-direct-manipulating");
+    };
     stage.addEventListener("pointerup", stopDraggingCar);
     stage.addEventListener("pointercancel", stopDraggingCar);
     stage.addEventListener("lostpointercapture", stopDraggingCar);
@@ -306,7 +311,7 @@
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="音の大きさとふるえのシミュレーション">' +
           '<rect width="640" height="360" fill="#f7f1fb"/><text x="28" y="42" class="scene-title">音が大きいと、ふるえは？</text><text x="30" y="80" class="scene-caption">' + (state.medium === "rubber" ? "輪ゴム" : "太鼓") + "・強さ " + state.strength + '%</text>' +
-          sourceDrawing + '<path class="sound-wave" d="' + wave + '" fill="none" stroke="#8a64a7" stroke-width="7" stroke-linecap="round"/><line x1="165" y1="175" x2="480" y2="175" stroke="#c7b6d5" stroke-width="2" stroke-dasharray="6 7"/>' +
+          '<g class="sound-source drag-handle" role="button" tabindex="0" aria-label="' + (state.medium === "rubber" ? "輪ゴム" : "太鼓") + 'をタップしてふるえを変える">' + sourceDrawing + '</g><text x="350" y="116" class="tiny-label">音を出す物をタップ</text><path class="sound-wave" d="' + wave + '" fill="none" stroke="#8a64a7" stroke-width="7" stroke-linecap="round"/><line x1="165" y1="175" x2="480" y2="175" stroke="#c7b6d5" stroke-width="2" stroke-dasharray="6 7"/>' +
           '<circle class="sound-receiver" cx="535" cy="175" r="' + (18 + transmission * .18) + '" fill="#e5c8ee" stroke="#8a64a7" stroke-width="4"/><path class="sound-rings" d="M570 140 Q620 175 570 210 M590 125 Q650 175 590 225" fill="none" stroke="#8a64a7" stroke-width="5" opacity="' + (transmission / 100) + '"/><text x="110" y="280" class="component-label">音を出す物のふるえ：' + vibration + ' / 100</text><text x="405" y="320" class="component-label">糸で伝わる強さ：' + transmission + '</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
@@ -319,6 +324,24 @@
       });
       view.setTrial({ condition: (state.medium === "rubber" ? "輪ゴム" : "太鼓") + "・強さ " + state.strength + "%・糸" + (state.string === "tight" ? "ぴん" : "ゆるい"), result: "元のふるえ " + vibration + "・伝わる強さ " + transmission });
     }
+    const soundStage = view.stage;
+    const pluck = () => {
+      state.strength = state.strength >= 100 ? 20 : Math.min(100, state.strength + 20);
+      strength.set(state.strength);
+      if (view.markTried) view.markTried();
+      draw();
+    };
+    soundStage.addEventListener("click", event => {
+      if (!event.target.closest || !event.target.closest(".sound-source")) return;
+      pluck();
+    });
+    soundStage.addEventListener("keydown", event => {
+      if (!event.target.closest || !event.target.closest(".sound-source") || !["Enter", " "].includes(event.key)) return;
+      event.preventDefault();
+      pluck();
+      const source = soundStage.querySelector(".sound-source");
+      if (source) source.focus();
+    });
     return {
       render: draw,
       reset: () => { state.strength = 55; state.medium = "rubber"; state.string = "tight"; medium.set(state.medium); strength.set(state.strength); string.set(state.string); draw(); },
@@ -343,8 +366,8 @@
       const shadowSide = state.time < 12 ? "西がわ" : state.time > 12 ? "東がわ" : "短い影";
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="太陽の位置と影のシミュレーション">' +
-          '<rect width="640" height="360" fill="#fff7e8"/><rect y="280" width="640" height="80" fill="#d6c38d"/><circle class="moving-sun" cx="' + sunX + '" cy="' + (270 - height) + '" r="28" fill="#f5c84d"/><text x="28" y="42" class="scene-title">太陽の位置が変わると、影は？</text><text x="30" y="80" class="scene-caption">' + state.time + "時ごろ・" + (state.target === "shadow" ? "影に注目" : "地面の温度に注目") + '</text><text x="72" y="118" class="component-label">東</text><text x="548" y="118" class="component-label">西</text>' +
-          '<rect x="322" y="180" width="16" height="100" fill="#806d51"/><path class="moving-shadow" d="M330 280 L' + shadowEnd + ' 280 L' + (shadowEnd - shadowDirection * 10) + ' 270 Z" fill="#8e836d" opacity=".75"/><text x="105" y="320" class="component-label">影：' + shadowSide + '・' + shadowLength + 'cm</text><text x="430" y="320" class="component-label">日なたの地面 ' + temp + '℃</text>' +
+          '<rect width="640" height="360" fill="#fff7e8"/><rect y="280" width="640" height="80" fill="#d6c38d"/><circle class="moving-sun drag-handle" role="slider" tabindex="0" aria-label="太陽を左右に動かして時刻を調整" aria-valuemin="8" aria-valuemax="16" aria-valuenow="' + state.time + '" cx="' + sunX + '" cy="' + (270 - height) + '" r="28" fill="#f5c84d"/><text x="28" y="42" class="scene-title">太陽の位置が変わると、影は？</text><text x="30" y="80" class="scene-caption">' + state.time + "時ごろ・" + (state.target === "shadow" ? "影に注目" : "地面の温度に注目") + '</text><text x="72" y="118" class="component-label">東</text><text x="548" y="118" class="component-label">西</text>' +
+          '<text x="190" y="346" class="tiny-label">太陽を左右に動かそう</text><rect x="322" y="180" width="16" height="100" fill="#806d51"/><path class="moving-shadow" d="M330 280 L' + shadowEnd + ' 280 L' + (shadowEnd - shadowDirection * 10) + ' 270 Z" fill="#8e836d" opacity=".75"/><text x="105" y="320" class="component-label">影：' + shadowSide + '・' + shadowLength + 'cm</text><text x="430" y="320" class="component-label">日なたの地面 ' + temp + '℃</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
         metrics: [
@@ -355,6 +378,51 @@
       });
       view.setTrial({ condition: state.time + "時", result: "影 " + shadowLength + "cm・地面 " + temp + "℃" });
     }
+    let draggingSun = false;
+    let sunGrabOffset = 0;
+    const sunStage = view.stage;
+    sunStage.addEventListener("pointerdown", event => {
+      const handle = event.target.closest && event.target.closest(".moving-sun");
+      if (!handle) return;
+      const point = svgPoint(sunStage.querySelector("svg"), event);
+      if (!point) return;
+      const sunX = 110 + ((state.time - 8) / 8) * 420;
+      sunGrabOffset = point.x - sunX;
+      draggingSun = true;
+      if (sunStage.setPointerCapture) {
+        try { sunStage.setPointerCapture(event.pointerId); }
+        catch (_) { draggingSun = false; return; }
+      }
+      sunStage.classList.add("is-direct-manipulating");
+      event.preventDefault();
+    });
+    sunStage.addEventListener("pointermove", event => {
+      if (!draggingSun) return;
+      const point = svgPoint(sunStage.querySelector("svg"), event);
+      if (!point) return;
+      const sunX = point.x - sunGrabOffset;
+      state.time = Math.round(clamp(8 + ((sunX - 110) / 420) * 8, 8, 16));
+      time.set(state.time);
+      draw();
+    });
+    const stopDraggingSun = () => {
+      if (draggingSun && view.markTried) view.markTried();
+      draggingSun = false;
+      sunStage.classList.remove("is-direct-manipulating");
+    };
+    sunStage.addEventListener("pointerup", stopDraggingSun);
+    sunStage.addEventListener("pointercancel", stopDraggingSun);
+    sunStage.addEventListener("lostpointercapture", stopDraggingSun);
+    sunStage.addEventListener("keydown", event => {
+      if (!event.target.closest || !event.target.closest(".moving-sun") || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault();
+      state.time = clamp(state.time + (event.key === "ArrowRight" ? 1 : -1), 8, 16);
+      time.set(state.time);
+      if (view.markTried) view.markTried();
+      draw();
+      const handle = sunStage.querySelector(".moving-sun");
+      if (handle) handle.focus();
+    });
     return {
       render: draw,
       reset: () => { state.time = 12; state.target = "shadow"; time.set(state.time); target.set(state.target); draw(); },
@@ -396,9 +464,9 @@
         '<svg class="extra-svg light-lab-svg" viewBox="0 0 640 360" role="img" aria-label="懐中電灯の光が鏡ではね返り壁へ届く道すじ">' +
           '<defs><marker id="rayArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#d99a16"/></marker><radialGradient id="lightSpot"><stop offset="0" stop-color="#fff9ba" stop-opacity="1"/><stop offset=".55" stop-color="#f8dc60" stop-opacity=".8"/><stop offset="1" stop-color="#f8dc60" stop-opacity="0"/></radialGradient></defs>' +
           '<rect width="640" height="360" fill="#fffbea"/><text x="28" y="38" class="scene-title">光の道すじを線でたどろう</text><text x="30" y="72" class="scene-caption">鏡 ' + state.mirrors + '枚 → 壁の' + targetZone + 'に届く</text>' +
-          '<rect x="564" y="82" width="24" height="210" rx="6" fill="#e8e0cf" stroke="#9c8f79" stroke-width="3"/><path d="M590 82 V292" stroke="#c9bda6" stroke-width="2"/>' +
+          '<text x="30" y="100" class="tiny-label">壁の光を上下に動かそう</text><rect x="564" y="82" width="24" height="210" rx="6" fill="#e8e0cf" stroke="#9c8f79" stroke-width="3"/><path d="M590 82 V292" stroke="#c9bda6" stroke-width="2"/>' +
           '<g transform="translate(45 200)"><rect width="58" height="48" rx="12" fill="#486a75"/><path d="M57 8 L86 15 V33 L57 40Z" fill="#79939b"/><circle cx="18" cy="24" r="7" fill="#d5eef2"/></g>' +
-          paths + '<circle class="light-spot" cx="' + wallX + '" cy="' + targetY + '" r="' + (25 + state.mirrors * 5) + '" fill="url(#lightSpot)"/>' + rings +
+          paths + '<g class="light-target drag-handle" role="slider" tabindex="0" aria-label="壁の光を上下に動かして高さを調整" aria-valuemin="100" aria-valuemax="270" aria-valuenow="' + state.angle + '"><circle class="light-spot" cx="' + wallX + '" cy="' + targetY + '" r="' + (25 + state.mirrors * 5) + '" fill="url(#lightSpot)"/>' + rings + '</g>' +
           '<g class="diagram-key"><rect x="32" y="300" width="576" height="42" rx="12" fill="#fff" opacity=".93"/><text x="50" y="326" class="component-label">① 光を出す</text><text x="185" y="326" class="component-label">② 鏡に当たる</text><text x="335" y="326" class="component-label">③ はね返る</text><text x="475" y="326" class="component-label">④ 壁に届く</text></g>' +
         '</svg>';
       core.renderReadout(view.readout, {
@@ -411,6 +479,49 @@
       });
       view.setTrial({ condition: "鏡 " + state.mirrors + "枚・壁の高さ " + targetZone, result: "明るさ " + brightness + " / 100" });
     }
+    let draggingLightTarget = false;
+    let lightGrabOffsetY = 0;
+    const lightStage = view.stage;
+    lightStage.addEventListener("pointerdown", event => {
+      const handle = event.target.closest && event.target.closest(".light-target");
+      if (!handle) return;
+      const point = svgPoint(lightStage.querySelector("svg"), event);
+      if (!point) return;
+      lightGrabOffsetY = point.y - state.angle;
+      draggingLightTarget = true;
+      if (lightStage.setPointerCapture) {
+        try { lightStage.setPointerCapture(event.pointerId); }
+        catch (_) { draggingLightTarget = false; return; }
+      }
+      lightStage.classList.add("is-direct-manipulating");
+      event.preventDefault();
+    });
+    lightStage.addEventListener("pointermove", event => {
+      if (!draggingLightTarget) return;
+      const point = svgPoint(lightStage.querySelector("svg"), event);
+      if (!point) return;
+      state.angle = Math.round(clamp(point.y - lightGrabOffsetY, 100, 270));
+      angle.set(state.angle);
+      draw();
+    });
+    const stopDraggingLightTarget = () => {
+      if (draggingLightTarget && view.markTried) view.markTried();
+      draggingLightTarget = false;
+      lightStage.classList.remove("is-direct-manipulating");
+    };
+    lightStage.addEventListener("pointerup", stopDraggingLightTarget);
+    lightStage.addEventListener("pointercancel", stopDraggingLightTarget);
+    lightStage.addEventListener("lostpointercapture", stopDraggingLightTarget);
+    lightStage.addEventListener("keydown", event => {
+      if (!event.target.closest || !event.target.closest(".light-target") || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
+      event.preventDefault();
+      state.angle = clamp(state.angle + (event.key === "ArrowDown" ? 5 : -5), 100, 270);
+      angle.set(state.angle);
+      if (view.markTried) view.markTried();
+      draw();
+      const handle = lightStage.querySelector(".light-target");
+      if (handle) handle.focus();
+    });
     return {
       render: draw,
       reset: () => { state.angle = 180; state.mirrors = 1; angle.set(state.angle); mirrors.set(String(state.mirrors)); draw(); },
@@ -443,7 +554,7 @@
           '<g><circle cx="190" cy="115" r="10" fill="#d9e1df" stroke="#60777d" stroke-width="3"/><circle cx="270" cy="115" r="10" fill="#d9e1df" stroke="#60777d" stroke-width="3"/><rect x="190" y="94" width="80" height="42" rx="8" fill="' + tested.color + '" stroke="#6e7776" stroke-width="3"/><text x="205" y="121" class="component-label">' + tested.label + '</text><text x="180" y="157" class="tiny-label">調べる物</text></g>' +
           '<g><rect x="85" y="225" width="60" height="74" rx="8" fill="#f0d36c" stroke="#8d7225" stroke-width="3"/><line x1="96" y1="245" x2="134" y2="245" stroke="#705b1d" stroke-width="5"/><line x1="103" y1="274" x2="127" y2="274" stroke="#705b1d" stroke-width="3"/><text x="74" y="322" class="component-label">乾電池 ＋／−</text></g>' +
           '<g><circle cx="505" cy="180" r="34" fill="' + (lit ? "#fff4a4" : "#eef0e9") + '" stroke="#7e7468" stroke-width="5"/><path d="M487 184 Q505 153 523 184 M493 188 H517" fill="none" stroke="' + (lit ? "#d88917" : "#999") + '" stroke-width="4"/><rect x="488" y="212" width="34" height="24" rx="4" fill="#9a9c96"/>' + (lit ? '<circle class="bulb-glow" cx="505" cy="180" r="64" fill="url(#bulbLight)"/>' : "") + '<text x="468" y="259" class="component-label">豆電球</text></g>' +
-          '<g><circle cx="300" cy="274" r="9" fill="#d9e1df" stroke="#60777d" stroke-width="3"/><circle cx="360" cy="274" r="9" fill="#d9e1df" stroke="#60777d" stroke-width="3"/>' + switchPart + '<text x="300" y="318" class="component-label">スイッチ：' + (state.closed === "closed" ? "つながる" : "切れ目") + '</text></g>' + flowMarks +
+          '<g class="circuit-switch drag-handle" role="switch" tabindex="0" aria-label="回路のスイッチを切り替える" aria-checked="' + (state.closed === "closed") + '"><circle cx="300" cy="274" r="9" fill="#d9e1df" stroke="#60777d" stroke-width="3"/><circle cx="360" cy="274" r="9" fill="#d9e1df" stroke="#60777d" stroke-width="3"/>' + switchPart + '<text x="300" y="318" class="component-label">スイッチ：' + (state.closed === "closed" ? "つながる" : "切れ目") + '</text></g>' + '<text x="250" y="348" class="tiny-label">スイッチをタップしてみよう</text>' + flowMarks +
         '</svg>';
       core.renderReadout(view.readout, {
         metrics: [
@@ -454,6 +565,24 @@
       });
       view.setTrial({ condition: (state.closed === "closed" ? "スイッチをつなぐ" : "スイッチを切る") + "・" + tested.label, result: lit ? "豆電球がつく" : "豆電球はつかない" });
     }
+    const circuitStage = view.stage;
+    const toggleSwitch = () => {
+      state.closed = state.closed === "closed" ? "open" : "closed";
+      closed.set(state.closed);
+      if (view.markTried) view.markTried();
+      draw();
+    };
+    circuitStage.addEventListener("click", event => {
+      if (!event.target.closest || !event.target.closest(".circuit-switch")) return;
+      toggleSwitch();
+    });
+    circuitStage.addEventListener("keydown", event => {
+      if (!event.target.closest || !event.target.closest(".circuit-switch") || !["Enter", " "].includes(event.key)) return;
+      event.preventDefault();
+      toggleSwitch();
+      const handle = circuitStage.querySelector(".circuit-switch");
+      if (handle) handle.focus();
+    });
     return {
       render: draw,
       reset: () => { state.material = "copper"; state.closed = "closed"; material.set(state.material); closed.set(state.closed); draw(); },
@@ -505,6 +634,7 @@
         try { magnetStage.setPointerCapture(event.pointerId); }
         catch (_) { draggingMagnet = false; return; }
       }
+      magnetStage.classList.add("is-direct-manipulating");
       event.preventDefault();
     });
     magnetStage.addEventListener("pointermove", event => {
@@ -517,7 +647,11 @@
       distance.set(state.distance);
       draw();
     });
-    const stopDraggingMagnet = () => { if (draggingMagnet && view.markTried) view.markTried(); draggingMagnet = false; };
+    const stopDraggingMagnet = () => {
+      if (draggingMagnet && view.markTried) view.markTried();
+      draggingMagnet = false;
+      magnetStage.classList.remove("is-direct-manipulating");
+    };
     magnetStage.addEventListener("pointerup", stopDraggingMagnet);
     magnetStage.addEventListener("pointercancel", stopDraggingMagnet);
     magnetStage.addEventListener("lostpointercapture", stopDraggingMagnet);

@@ -16,7 +16,15 @@
     const stage = view.querySelector("[data-sim-stage]");
     const cleanups = [];
     let sceneTimer = 0;
-    const sceneObserver = new MutationObserver(() => {
+    const sceneObserver = new MutationObserver(records => {
+      if (stage.classList.contains("is-direct-manipulating")) return;
+      const onlyTouchSparks = records.every(record => {
+        const nodes = [...record.addedNodes, ...record.removedNodes];
+        return nodes.length > 0 && nodes.every(node =>
+          node.nodeType === 1 && node.classList.contains("stage-touch-spark")
+        );
+      });
+      if (onlyTouchSparks) return;
       stage.classList.remove("is-changing");
       void stage.offsetWidth;
       stage.classList.add("is-changing");

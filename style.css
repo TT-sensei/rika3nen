@@ -513,3 +513,8 @@ body{background:radial-gradient(circle at 95% 0,#cfeef7 0 14rem,transparent 14re
 .instant-lab .drag-handle{cursor:grab;touch-action:none;outline:none}
 .instant-lab .drag-handle:active{cursor:grabbing;filter:drop-shadow(0 4px 3px rgba(25,70,90,.28))}
 .instant-lab .drag-handle:focus-visible{filter:drop-shadow(0 0 4px #176b91);outline:none}
+
+
+/* A tap on the sound source should feel like plucking, not dragging. */
+.instant-lab .sound-source{cursor:pointer;touch-action:manipulation}
+.instant-lab .sound-source:active{filter:drop-shadow(0 3px 3px rgba(70,45,90,.28))}
