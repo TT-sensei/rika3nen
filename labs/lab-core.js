@@ -17,6 +17,7 @@
     const cleanups = [];
     let sceneTimer = 0;
     const sceneObserver = new MutationObserver(() => {
+      if (stage.classList.contains("is-direct-manipulating")) return;
       stage.classList.remove("is-changing");
       void stage.offsetWidth;
       stage.classList.add("is-changing");
