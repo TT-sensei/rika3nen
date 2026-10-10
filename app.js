@@ -410,7 +410,7 @@
     if (labLoadPromise) return labLoadPromise;
     labLoadPromise = new Promise((resolve, reject) => {
       const script = document.createElement("script");
-      script.src = "labs/index.js?v=sim-review-20261011";
+      script.src = "labs/index.js?v=free-play-20261011";
       script.onload = () => window.RikaLabRouter ? resolve(window.RikaLabRouter) : reject(new Error("LABを読み込めませんでした"));
       script.onerror = () => reject(new Error("LABを読み込めませんでした"));
       document.head.append(script);
