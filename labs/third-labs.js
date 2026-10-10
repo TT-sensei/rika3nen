@@ -10,9 +10,12 @@
     view.note.textContent = manifest.modelNote || "";
     const model = create(view, core);
     core.action(view.actions, "リセット", () => model.reset());
-    core.action(view.actions, model.stepLabel || "条件を1つ進める", () => { if (typeof model.step === "function") model.step(); });
-    core.action(view.actions, "この結果をくらべる", () => {
-      if (view.saveTrial()) host.showToast && host.showToast("結果を右側にのこしました");
+    core.action(view.actions, model.stepLabel || "1つ進める", () => {
+      if (typeof model.step === "function") { model.step(); view.markTried(); }
+    });
+    core.action(view.actions, "🎲 おまかせ", () => { core.randomizeOne(view); }, "randomize-button");
+    core.action(view.actions, "結果を記録", () => {
+      if (view.saveTrial()) host.showToast && host.showToast("実験ノートに記録したよ");
     }, "primary-button");
     model.render();
     return () => {
