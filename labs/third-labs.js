@@ -92,8 +92,8 @@
   function plants(view, core) {
     const state = { kind: "sunflower", day: 14, focus: "growth" };
     const kinds = {
-      sunflower: { label: "ヒマワリ", stem: "#4f934b", flower: "#f2c94c", maxHeight: 188 },
-      balsam: { label: "ホウセンカ", stem: "#4a8b62", flower: "#e692b2", maxHeight: 158 }
+      sunflower: { label: "ヒマワリ", stem: "#4f934b", flower: "#f2c94c", maxHeight: 116 },
+      balsam: { label: "ホウセンカ", stem: "#4a8b62", flower: "#e692b2", maxHeight: 96 }
     };
     const section = core.section(view.panel, "育ち方を時間で見る", "日数や植物の種類を変えて、育つ順序と体のつくりを比べよう。");
     const kind = core.options(section, { label: "植物", values: [option("sunflower", "ヒマワリ"), option("balsam", "ホウセンカ")], value: state.kind, format: item => item.label, onChange: value => { state.kind = value; draw(); } });
@@ -232,7 +232,7 @@
       const amplitude = vibration * .32;
       const sourceDrawing = state.medium === "rubber"
         ? '<line x1="110" y1="150" x2="110" y2="200" stroke="#607483" stroke-width="7"/><line x1="151" y1="150" x2="151" y2="200" stroke="#607483" stroke-width="7"/><path d="M110 175 Q130 ' + (175 - amplitude) + ' 151 175 Q130 ' + (175 + amplitude) + ' 110 175" fill="none" stroke="#bd5550" stroke-width="5"/>'
-        : '<ellipse cx="130" cy="175" rx="28" ry="38" fill="#d9b58a" stroke="#8f684b" stroke-width="5"/><ellipse cx="130" cy="175" rx="18" ry="28" fill="#f4dfbd" stroke="#8f684b" stroke-width="3"/><path d="M130 145 V205" stroke="#b58a62" stroke-width="3"/>';
+        : '<ellipse cx="130" cy="175" rx="28" ry="38" fill="#d9b58a" stroke="#8f684b" stroke-width="5"/><ellipse cx="130" cy="175" rx="18" ry="28" fill="#f4dfbd" stroke="#8f684b" stroke-width="3"/><path d="M111 175 Q130 ' + (175 - amplitude * .4) + ' 149 175 Q130 ' + (175 + amplitude * .4) + ' 111 175" fill="none" stroke="#b58a62" stroke-width="4"/>';
       const wave = Array.from({ length: 9 }, (_, i) => {
         const x = 166 + i * 36;
         const y = 175 + (i % 2 ? amplitude : -amplitude);
@@ -301,7 +301,7 @@
   function light(view, core) {
     const state = { angle: 180, mirrors: 1 };
     const section = core.section(view.panel, "反射の条件を変える", "黄色い線をたどって、光が鏡ではね返る道すじを見よう。");
-    const angle = core.range(section, { label: "壁で光が届く高さ", min: 100, max: 270, value: state.angle, format: value => value < 155 ? "上" : value > 220 ? "下" : "中央", onInput: value => { state.angle = value; draw(); } });
+    const angle = core.range(section, { label: "壁で光が届く高さ", min: 100, max: 270, value: state.angle, format: value => value < 145 ? "上" : value > 215 ? "下" : "中央", onInput: value => { state.angle = value; draw(); } });
     const mirrors = core.options(section, { label: "同じ場所へ向ける鏡", values: [option("1", "1枚"), option("2", "2枚"), option("3", "3枚")], value: String(state.mirrors), format: item => item.label, onChange: value => { state.mirrors = Number(value); draw(); } });
     function draw() {
       const sourceX = 131, sourceY = 188, mirrorX = 282, wallX = 570;
