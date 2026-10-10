@@ -250,6 +250,7 @@
         try { stage.setPointerCapture(event.pointerId); }
         catch (_) { draggingCar = false; return; }
       }
+      stage.classList.add("is-direct-manipulating");
       event.preventDefault();
     });
     stage.addEventListener("pointermove", event => {
@@ -263,7 +264,11 @@
       force.set(state.force);
       draw();
     });
-    const stopDraggingCar = () => { if (draggingCar && view.markTried) view.markTried(); draggingCar = false; };
+    const stopDraggingCar = () => {
+      if (draggingCar && view.markTried) view.markTried();
+      draggingCar = false;
+      stage.classList.remove("is-direct-manipulating");
+    };
     stage.addEventListener("pointerup", stopDraggingCar);
     stage.addEventListener("pointercancel", stopDraggingCar);
     stage.addEventListener("lostpointercapture", stopDraggingCar);
@@ -629,6 +634,7 @@
         try { magnetStage.setPointerCapture(event.pointerId); }
         catch (_) { draggingMagnet = false; return; }
       }
+      magnetStage.classList.add("is-direct-manipulating");
       event.preventDefault();
     });
     magnetStage.addEventListener("pointermove", event => {
@@ -641,7 +647,11 @@
       distance.set(state.distance);
       draw();
     });
-    const stopDraggingMagnet = () => { if (draggingMagnet && view.markTried) view.markTried(); draggingMagnet = false; };
+    const stopDraggingMagnet = () => {
+      if (draggingMagnet && view.markTried) view.markTried();
+      draggingMagnet = false;
+      magnetStage.classList.remove("is-direct-manipulating");
+    };
     magnetStage.addEventListener("pointerup", stopDraggingMagnet);
     magnetStage.addEventListener("pointercancel", stopDraggingMagnet);
     magnetStage.addEventListener("lostpointercapture", stopDraggingMagnet);
