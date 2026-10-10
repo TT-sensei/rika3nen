@@ -10,7 +10,7 @@
     view.note.textContent = manifest.modelNote || "";
     const model = create(view, core);
     core.action(view.actions, "リセット", () => model.reset());
-    core.action(view.actions, model.stepLabel || "条件を1つ進める", () => model.step());
+    core.action(view.actions, model.stepLabel || "条件を1つ進める", () => { if (typeof model.step === "function") model.step(); });
     core.action(view.actions, "この結果をくらべる", () => {
       if (view.saveTrial()) host.showToast && host.showToast("結果を右側にのこしました");
     }, "primary-button");
@@ -97,7 +97,7 @@
     };
     const section = core.section(view.panel, "育ち方を時間で見る", "日数や植物の種類を変えて、育つ順序と体のつくりを比べよう。");
     const kind = core.options(section, { label: "植物", values: [option("sunflower", "ヒマワリ"), option("balsam", "ホウセンカ")], value: state.kind, format: item => item.label, onChange: value => { state.kind = value; draw(); } });
-    const day = core.range(section, { label: "種をまいてから", min: 0, max: 63, step: 7, value: state.day, format: value => value + "日", onInput: value => { state.day = value; draw(); } });
+    const day = core.range(section, { label: "育ちの目安（日）", min: 0, max: 63, step: 7, value: state.day, format: value => value + "日", onInput: value => { state.day = value; draw(); } });
     const focus = core.options(section, { label: "見るところ", values: [option("growth", "育つ順序"), option("body", "体のつくり")], value: state.focus, format: item => item.label, onChange: value => { state.focus = value; draw(); } });
     function draw() {
       const data = kinds[state.kind];
@@ -182,6 +182,7 @@
     }
     return {
       render: draw,
+      stepLabel: "育ちを1段階進める",
       reset: () => { state.kind = "butterfly"; state.stage = 1; kind.set(state.kind); stage.setMax(3); stage.set(state.stage); draw(); },
       step: () => { const max = state.kind === "butterfly" ? 3 : 2; state.stage = state.stage >= max ? 0 : state.stage + 1; stage.set(state.stage); draw(); }
     };
@@ -193,27 +194,29 @@
     const source = core.options(section, { label: "力の種類", values: [option("wind", "風"), option("rubber", "ゴム")], value: state.source, format: item => item.label, onChange: value => { state.source = value; force.setLabel(value === "wind" ? "風の強さ" : "ゴムの伸び"); draw(); } });
     const force = core.range(section, { label: state.source === "wind" ? "風の強さ" : "ゴムの伸び", min: 0, max: 100, value: state.force, format: value => value + "%", onInput: value => { state.force = value; draw(); } });
     function draw() {
-      const distance = Math.round(state.force * 2.45);
-      const carX = 92 + distance * 1.65;
+      const distance = state.source === "wind" ? Math.round(state.force * 2) : Math.round(state.force * state.force / 50);
+      const carX = 92 + distance * 2.0;
       const arrows = state.source === "wind" ? '<path class="force-arrow" d="M105 150 H250 M130 125 H300 M170 175 H330" stroke="#5aa6b4" stroke-width="9" stroke-linecap="round"/><path class="force-arrow" d="M240 140 l25 10 -25 10 M290 115 l25 10 -25 10 M320 165 l25 10 -25 10" fill="none" stroke="#327b8b" stroke-width="6"/>' : '<path class="rubber-stretch" d="M110 150 Q165 110 220 150 T330 150" fill="none" stroke="#bd5550" stroke-width="7"/><path class="force-arrow" d="M110 150 H' + (110 + state.force * .8) + '" stroke="#bd5550" stroke-width="5"/>';
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="風やゴムの力と車の移動距離のシミュレーション">' +
           '<rect width="640" height="360" fill="#eef8fa"/><text x="28" y="42" class="scene-title">力を大きくすると、車は？</text><text x="30" y="80" class="scene-caption">' + (state.source === "wind" ? "風の強さ" : "ゴムの伸び") + " " + state.force + '%</text>' + arrows +
-          '<path d="M70 270 H570" stroke="#78949a" stroke-width="5"/><path d="M70 287 H570" stroke="#c5d9d9" stroke-width="2"/><g class="sim-car"><rect x="' + carX + '" y="230" width="72" height="35" rx="10" fill="#27849b"/><circle cx="' + (carX + 16) + '" cy="270" r="12" fill="#4b5c62"/><circle cx="' + (carX + 57) + '" cy="270" r="12" fill="#4b5c62"/></g><text x="80" y="320" class="component-label">0cm</text><text x="490" y="320" class="component-label">250cm</text><line class="distance-line" x1="92" y1="305" x2="' + (92 + distance * 1.65) + '" y2="305" stroke="#27849b" stroke-width="6"/>' +
+          '<path d="M70 270 H570" stroke="#78949a" stroke-width="5"/><path d="M70 287 H570" stroke="#c5d9d9" stroke-width="2"/><g class="sim-car"><rect x="' + carX + '" y="230" width="72" height="35" rx="10" fill="#27849b"/><circle cx="' + (carX + 16) + '" cy="270" r="12" fill="#4b5c62"/><circle cx="' + (carX + 57) + '" cy="270" r="12" fill="#4b5c62"/></g><text x="80" y="320" class="component-label">0cm</text><text x="490" y="320" class="component-label">200cm</text><line class="distance-line" x1="92" y1="305" x2="' + (92 + distance * 2.0) + '" y2="305" stroke="#27849b" stroke-width="6"/>' +
         '</svg>';
       core.renderReadout(view.readout, {
         metrics: [
           { label: "力の種類", value: state.source === "wind" ? "風" : "ゴム", detail: "変えた条件" },
-          { label: "進んだ距離", value: distance + " cm", detail: "同じ車のモデル" }
+          { label: "進んだ距離", value: distance + " cm", detail: "モデルの目安（実測値ではない）" }
         ],
-        message: state.force > 70 ? "風を強くしたりゴムを長く伸ばしたりすると、車を動かすはたらきが大きくなるね。" : "力の大きさを変えて、車の進んだ距離を比べてみよう。"
+        message: state.force === 0 ? "力が0%のときは、車が進まないモデルだよ。" : state.source === "wind" ? "風を強くすると、車の進む距離が長くなるモデルだよ。" : "ゴムを長くのばすほど、たくわえられる力が大きくなるモデルだよ。",
+        note: "距離は条件の違いを比べるためのモデル値です。実際の距離は車や床、風、ゴムの条件によって変わります。"
       });
       view.setTrial({ condition: (state.source === "wind" ? "風" : "ゴム") + "・力 " + state.force + "%", result: distance + "cm進んだ" });
     }
     return {
       render: draw,
       reset: () => { state.force = 55; state.source = "wind"; source.set(state.source); force.set(state.force); draw(); },
-      step: () => { state.force = state.force >= 100 ? 0 : state.force + 20; force.set(state.force); draw(); }
+      stepLabel: "力を変える",
+      step: () => { state.force = state.force >= 100 ? 0 : Math.min(100, state.force + 20); force.set(state.force); draw(); }
     };
   }
 
@@ -226,16 +229,19 @@
     function draw() {
       const vibration = Math.round(state.strength);
       const transmission = Math.round(vibration * (state.string === "tight" ? 1 : .25));
-      const amplitude = 6 + vibration * .32;
+      const amplitude = vibration * .32;
+      const sourceDrawing = state.medium === "rubber"
+        ? '<line x1="110" y1="150" x2="110" y2="200" stroke="#607483" stroke-width="7"/><line x1="151" y1="150" x2="151" y2="200" stroke="#607483" stroke-width="7"/><path d="M110 175 Q130 ' + (175 - amplitude) + ' 151 175 Q130 ' + (175 + amplitude) + ' 110 175" fill="none" stroke="#bd5550" stroke-width="5"/>'
+        : '<ellipse cx="130" cy="175" rx="28" ry="38" fill="#d9b58a" stroke="#8f684b" stroke-width="5"/><ellipse cx="130" cy="175" rx="18" ry="28" fill="#f4dfbd" stroke="#8f684b" stroke-width="3"/><path d="M130 145 V205" stroke="#b58a62" stroke-width="3"/>';
       const wave = Array.from({ length: 9 }, (_, i) => {
-        const x = 115 + i * 48;
+        const x = 166 + i * 36;
         const y = 175 + (i % 2 ? amplitude : -amplitude);
         return (i === 0 ? "M" : " L") + x + " " + y;
       }).join("");
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="音の大きさとふるえのシミュレーション">' +
           '<rect width="640" height="360" fill="#f7f1fb"/><text x="28" y="42" class="scene-title">音が大きいと、ふるえは？</text><text x="30" y="80" class="scene-caption">' + (state.medium === "rubber" ? "輪ゴム" : "太鼓") + "・強さ " + state.strength + '%</text>' +
-          '<path class="sound-wave" d="' + wave + '" fill="none" stroke="#8a64a7" stroke-width="7" stroke-linecap="round"/><line x1="115" y1="175" x2="500" y2="175" stroke="#c7b6d5" stroke-width="2" stroke-dasharray="6 7"/>' +
+          sourceDrawing + '<path class="sound-wave" d="' + wave + '" fill="none" stroke="#8a64a7" stroke-width="7" stroke-linecap="round"/><line x1="165" y1="175" x2="480" y2="175" stroke="#c7b6d5" stroke-width="2" stroke-dasharray="6 7"/>' +
           '<circle class="sound-receiver" cx="535" cy="175" r="' + (18 + transmission * .18) + '" fill="#e5c8ee" stroke="#8a64a7" stroke-width="4"/><path class="sound-rings" d="M570 140 Q620 175 570 210 M590 125 Q650 175 590 225" fill="none" stroke="#8a64a7" stroke-width="5" opacity="' + (transmission / 100) + '"/><text x="110" y="280" class="component-label">音を出す物のふるえ：' + vibration + ' / 100</text><text x="405" y="320" class="component-label">糸で伝わる強さ：' + transmission + '</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
@@ -243,14 +249,16 @@
           { label: "音を出す物のふるえ", value: vibration + " / 100", detail: state.medium === "rubber" ? "輪ゴム" : "太鼓" },
           { label: "糸で伝わる強さ", value: transmission + " / 100", detail: state.string === "tight" ? "ぴんと張った糸" : "ゆるんだ糸" }
         ],
-        message: state.string === "tight" ? "音が大きいほど物のふるえも大きいね。糸をぴんと張ると、そのふるえが伝わりやすいよ。" : "音を出す物は同じようにふるえても、糸がゆるむと相手へ伝わりにくいね。"
+        message: state.string === "tight" ? "音が大きいほど物のふるえも大きいね。糸をぴんと張ると、そのふるえが伝わりやすいよ。" : "音を出す物は同じようにふるえても、糸がゆるむと相手へ伝わりにくいね。",
+        note: "ふるえと糸電話での伝わりやすさは、違いを比べるためのモデル値です。実際の音量や伝わり方を測定した数値ではありません。"
       });
       view.setTrial({ condition: (state.medium === "rubber" ? "輪ゴム" : "太鼓") + "・強さ " + state.strength + "%・糸" + (state.string === "tight" ? "ぴん" : "ゆるい"), result: "元のふるえ " + vibration + "・伝わる強さ " + transmission });
     }
     return {
       render: draw,
       reset: () => { state.strength = 55; state.medium = "rubber"; state.string = "tight"; medium.set(state.medium); strength.set(state.strength); string.set(state.string); draw(); },
-      step: () => { state.strength = state.strength >= 100 ? 0 : state.strength + 20; strength.set(state.strength); draw(); }
+      stepLabel: "音を出す強さを変える",
+      step: () => { state.strength = state.strength >= 100 ? 0 : Math.min(100, state.strength + 20); strength.set(state.strength); draw(); }
     };
   }
 
@@ -285,18 +293,19 @@
     return {
       render: draw,
       reset: () => { state.time = 12; state.target = "shadow"; time.set(state.time); target.set(state.target); draw(); },
+      stepLabel: "時刻を1時間進める",
       step: () => { state.time = state.time >= 16 ? 8 : state.time + 1; time.set(state.time); draw(); }
     };
   }
 
   function light(view, core) {
-    const state = { angle: 90, mirrors: 1 };
+    const state = { angle: 180, mirrors: 1 };
     const section = core.section(view.panel, "反射の条件を変える", "黄色い線をたどって、光が鏡ではね返る道すじを見よう。");
-    const angle = core.range(section, { label: "鏡の向き（反射先）", min: 35, max: 145, value: state.angle, format: value => value + "°", onInput: value => { state.angle = value; draw(); } });
+    const angle = core.range(section, { label: "壁で光が届く高さ", min: 100, max: 270, value: state.angle, format: value => value < 155 ? "上" : value > 220 ? "下" : "中央", onInput: value => { state.angle = value; draw(); } });
     const mirrors = core.options(section, { label: "同じ場所へ向ける鏡", values: [option("1", "1枚"), option("2", "2枚"), option("3", "3枚")], value: String(state.mirrors), format: item => item.label, onChange: value => { state.mirrors = Number(value); draw(); } });
     function draw() {
-      const sourceX = 82, sourceY = 188, mirrorX = 282, wallX = 570;
-      const targetY = Math.round(270 - ((state.angle - 35) / 110) * 180);
+      const sourceX = 131, sourceY = 188, mirrorX = 282, wallX = 570;
+      const targetY = state.angle;
       const targetZone = targetY < 145 ? "上" : targetY > 215 ? "下" : "中央";
       const mirrorYs = state.mirrors === 1 ? [188] : state.mirrors === 2 ? [158, 218] : [132, 188, 244];
       const brightness = 32 + state.mirrors * 22;
@@ -315,7 +324,7 @@
         const x1 = mirrorX - tX * half, y1 = my - tY * half;
         const x2 = mirrorX + tX * half, y2 = my + tY * half;
         const normal = index === 0 ? '<line x1="' + (mirrorX - nX * 46) + '" y1="' + (my - nY * 46) + '" x2="' + (mirrorX + nX * 46) + '" y2="' + (my + nY * 46) + '" stroke="#74888d" stroke-width="2" stroke-dasharray="5 5"/><text x="' + (mirrorX + nX * 50 - 18) + '" y="' + (my + nY * 50 - 5) + '" class="tiny-label">鏡に直角</text>' : "";
-        return '<g><line class="light-ray" style="--ray-delay:' + (index * .07) + 's" x1="' + (sourceX + 35) + '" y1="' + sourceY + '" x2="' + (mirrorX - dX * 7) + '" y2="' + (my - dY * 7) + '" stroke="#f0b72f" stroke-width="6" marker-end="url(#rayArrow)"/><line class="light-ray" style="--ray-delay:' + ((index + 1) * .07) + 's" x1="' + (mirrorX + rX * 7) + '" y1="' + (my + rY * 7) + '" x2="' + (wallX - 12) + '" y2="' + (targetY - rY * 3) + '" stroke="#f5c94b" stroke-width="6" marker-end="url(#rayArrow)"/>' + normal + '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#607b83" stroke-width="13" stroke-linecap="round"/><line x1="' + (x1 + nX * 4) + '" y1="' + (y1 + nY * 4) + '" x2="' + (x2 + nX * 4) + '" y2="' + (y2 + nY * 4) + '" stroke="#d8eef2" stroke-width="7" stroke-linecap="round"/><circle cx="' + mirrorX + '" cy="' + my + '" r="5" fill="#fff"/></g>';
+        return '<g><line class="light-ray" style="--ray-delay:' + (index * .07) + 's" x1="' + sourceX + '" y1="' + sourceY + '" x2="' + (mirrorX - dX * 7) + '" y2="' + (my - dY * 7) + '" stroke="#f0b72f" stroke-width="6" marker-end="url(#rayArrow)"/><line class="light-ray" style="--ray-delay:' + ((index + 1) * .07) + 's" x1="' + (mirrorX + rX * 7) + '" y1="' + (my + rY * 7) + '" x2="' + (wallX - 12) + '" y2="' + (targetY - rY * 3) + '" stroke="#f5c94b" stroke-width="6" marker-end="url(#rayArrow)"/>' + normal + '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#607b83" stroke-width="13" stroke-linecap="round"/><line x1="' + (x1 + nX * 4) + '" y1="' + (y1 + nY * 4) + '" x2="' + (x2 + nX * 4) + '" y2="' + (y2 + nY * 4) + '" stroke="#d8eef2" stroke-width="7" stroke-linecap="round"/><circle cx="' + mirrorX + '" cy="' + my + '" r="5" fill="#fff"/></g>';
       }).join("");
       const rings = Array.from({ length: state.mirrors }, (_, i) => '<circle cx="' + wallX + '" cy="' + targetY + '" r="' + (17 + i * 8) + '" fill="none" stroke="#f7d75a" stroke-width="4" opacity="' + (.7 - i * .16) + '"/>').join("");
       view.stage.innerHTML =
@@ -332,14 +341,16 @@
           { label: "光が届く場所", value: "壁の" + targetZone, detail: "鏡の向きを変えると上下に動く" },
           { label: "光の重なり", value: state.mirrors + "本", detail: "同じ場所で明るさ " + brightness + " / 100" }
         ],
-        message: "光はまっすぐ進み、鏡に当たるとはね返ります。鏡の向きを変えると、はね返った光の進む先が変わります。"
+        message: "光はまっすぐ進み、鏡に当たるとはね返ります。それぞれの鏡の向きが変わると、光が届く高さも変わります。",
+        note: "鏡の枚数は明るさを比べるためのモデルです。光の強さは実測値ではありません。"
       });
-      view.setTrial({ condition: "鏡 " + state.mirrors + "枚・向き " + state.angle + "°", result: "壁の" + targetZone + "・明るさ " + brightness + " / 100" });
+      view.setTrial({ condition: "鏡 " + state.mirrors + "枚・壁の高さ " + targetZone, result: "明るさ " + brightness + " / 100" });
     }
     return {
       render: draw,
-      reset: () => { state.angle = 90; state.mirrors = 1; angle.set(state.angle); mirrors.set(String(state.mirrors)); draw(); },
-      step: () => { state.angle = state.angle >= 145 ? 35 : state.angle + 20; angle.set(state.angle); draw(); }
+      reset: () => { state.angle = 180; state.mirrors = 1; angle.set(state.angle); mirrors.set(String(state.mirrors)); draw(); },
+      stepLabel: "光が届く高さを変える",
+      step: () => { state.angle = state.angle >= 270 ? 100 : Math.min(270, state.angle + 45); angle.set(state.angle); draw(); }
     };
   }
 
@@ -381,6 +392,7 @@
     return {
       render: draw,
       reset: () => { state.material = "copper"; state.closed = "closed"; material.set(state.material); closed.set(state.closed); draw(); },
+      stepLabel: "スイッチを切り替える",
       step: () => { state.closed = state.closed === "closed" ? "open" : "closed"; closed.set(state.closed); draw(); }
     };
   }
@@ -394,9 +406,8 @@
     const distance = core.range(section, { label: "距離", min: 20, max: 100, value: state.distance, format: value => value + "cm", onInput: value => { state.distance = value; draw(); } });
     function draw() {
       const opposite = state.poleA !== state.poleB;
-      const force = Math.round(clamp((110 - state.distance) * .82, 0, 75));
-      const gap = 35 + state.distance * .7;
-      const rightX = 210 + gap;
+      const force = Math.round(clamp(100 * Math.pow(20 / state.distance, 2), 0, 100));
+      const rightX = 295 + state.distance * 1.15;
       const arrow = opposite ? '<path d="M280 135 H' + (rightX - 18) + '" stroke="#bd5550" stroke-width="7" marker-end="url(#arrow)"/>' : '<path d="M280 135 H245 M' + (rightX - 18) + ' 135 H' + (rightX + 18) + '" stroke="#607483" stroke-width="7"/>';
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="磁石の極と材料による動きのシミュレーション">' +
@@ -407,16 +418,18 @@
       core.renderReadout(view.readout, {
         metrics: [
           { label: "極の関係", value: opposite ? "引き合う" : "しりぞけ合う", detail: "同じ極／違う極" },
-          { label: "鉄への力", value: state.material === "iron" ? force + " / 75" : "ほぼ 0", detail: state.distance + "cmのモデル" }
+          { label: "鉄への力（モデル）", value: state.material === "iron" ? force + " / 100" : "ほぼ 0", detail: state.distance + "cmのモデル" }
         ],
-        message: state.material === "iron" ? "鉄は磁石に引き付けられるね。極を変えると、引き合うかしりぞけ合うかも変わるよ。" : "金属でもアルミは磁石につかないね。材料を変えて比べてみよう。"
+        message: state.material === "iron" ? "鉄は磁石に引き付けられるね。距離が遠くなるほど引き付ける力が弱くなるモデルで比べよう。" : "金属でもアルミは磁石につかないね。材料を変えて比べてみよう。",
+        note: "引き付ける力は距離による変化を比べるためのモデル値です。実物の磁石の力を測定した数値ではありません。"
       });
-      view.setTrial({ condition: state.poleA + "極と" + state.poleB + "極・" + (state.material === "iron" ? "鉄" : "アルミ"), result: (opposite ? "引き合う" : "しりぞけ合う") + "・物は" + (state.material === "iron" ? "つく" : "つかない") });
+      view.setTrial({ condition: state.poleA + "極と" + state.poleB + "極・距離 " + state.distance + "cm・" + (state.material === "iron" ? "鉄" : "アルミ"), result: (opposite ? "引き合う" : "しりぞけ合う") + "・引き付け " + (state.material === "iron" ? force : 0) + " / 100" });
     }
     return {
       render: draw,
       reset: () => { state.poleA = "N"; state.poleB = "S"; state.distance = 50; state.material = "iron"; poleA.set(state.poleA); poleB.set(state.poleB); distance.set(state.distance); material.set(state.material); draw(); },
-      step: () => { state.distance = state.distance >= 100 ? 20 : state.distance + 20; distance.set(state.distance); draw(); }
+      stepLabel: "距離を変える",
+      step: () => { state.distance = state.distance >= 100 ? 20 : Math.min(100, state.distance + 20); distance.set(state.distance); draw(); }
     };
   }
 
@@ -427,28 +440,30 @@
     const material = core.options(section, { label: "材料", values: [option("clay", "粘土"), option("wood", "木"), option("iron", "鉄")], value: state.material, format: item => item.label, onChange: value => { state.material = value; draw(); } });
     const amount = core.range(section, { label: "量", min: 1, max: 3, value: state.amount, format: value => value + "こ分", onInput: value => { state.amount = value; draw(); } });
     function draw() {
-      const density = { clay: 100, wood: 55, iron: 260 }[state.material];
+      const density = { clay: 2, wood: 1, iron: 8 }[state.material];
       const weightValue = state.amount * density;
       const object = state.shape === "round" ? '<circle class="weight-object" cx="320" cy="185" r="58" fill="' + ({clay:"#c98268",wood:"#b88d57",iron:"#9ca7ac"}[state.material]) + '" stroke="#6c777b" stroke-width="4"/>' : '<rect class="weight-object" x="245" y="145" width="150" height="80" rx="10" fill="' + ({clay:"#c98268",wood:"#b88d57",iron:"#9ca7ac"}[state.material]) + '" stroke="#6c777b" stroke-width="4"/>';
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="形と材料による物の重さのシミュレーション">' +
           '<rect width="640" height="360" fill="#f0f4f6"/><text x="28" y="42" class="scene-title">形を変えると、重さは？</text><text x="30" y="80" class="scene-caption">' + (state.shape === "round" ? "丸い形" : "平らな形") + "・" + ({clay:"粘土",wood:"木",iron:"鉄"}[state.material]) + "・" + state.amount + 'こ分</text>' +
           '<path d="M185 285 H455 M320 285 V305" stroke="#607483" stroke-width="6"/><path d="M220 310 H420" stroke="#607483" stroke-width="5"/><path d="M250 300 l-32 28 M390 300 l32 28" stroke="#607483" stroke-width="4"/>' + object +
-          '<text x="125" y="335" class="component-label">量が同じなら、形を変えても重さは同じ</text><text x="440" y="185" class="component-label">' + weightValue + 'g</text>' +
+          '<text x="125" y="335" class="component-label">同じ材料・同じ量なら、形を変えても重さは同じ</text><text x="440" y="185" class="component-label">' + weightValue + 'g</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
         metrics: [
           { label: "重さ", value: weightValue + "g", detail: "量 " + state.amount + "こ分" },
           { label: "形の影響", value: "変わらない", detail: state.shape === "round" ? "丸い形" : "平らな形" }
         ],
-        message: state.shape === "round" || state.shape === "flat" ? "同じ量の物なら、丸めたり平らにしたりしても重さは変わらないね。材料を変えると重さを比べられるよ。" : ""
+        message: "同じ材料・同じ量なら、形を変えても重さは変わらないね。材料や量を変えると重さを比べられるよ。",
+        note: "同じ体積の物を比べるモデルです。木・粘土・鉄の重さは学習用の目安で、実際の材料には種類による差があります。"
       });
       view.setTrial({ condition: ({clay:"粘土",wood:"木",iron:"鉄"}[state.material]) + "・" + (state.shape === "round" ? "丸い" : "平ら") + "・" + state.amount + "こ分", result: weightValue + "g" });
     }
     return {
       render: draw,
       reset: () => { state.shape = "round"; state.material = "clay"; state.amount = 1; shape.set(state.shape); material.set(state.material); amount.set(state.amount); draw(); },
-      step: () => { state.shape = state.shape === "round" ? "flat" : "round"; shape.set(state.shape); draw(); }
+      stepLabel: "量を1こ分増やす",
+      step: () => { state.amount = state.amount >= 3 ? 1 : state.amount + 1; amount.set(state.amount); draw(); }
     };
   }
 
