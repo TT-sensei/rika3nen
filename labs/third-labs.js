@@ -203,7 +203,7 @@
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="風やゴムの力と車の移動距離のシミュレーション">' +
           '<rect width="640" height="360" fill="#eef8fa"/><text x="28" y="42" class="scene-title">力を大きくすると、車は？</text><text x="30" y="80" class="scene-caption">' + (state.source === "wind" ? "風の強さ" : "ゴムの伸び") + " " + state.force + '%</text>' + arrows +
-          '<path d="M70 270 H570" stroke="#78949a" stroke-width="5"/><path d="M70 287 H570" stroke="#c5d9d9" stroke-width="2"/><g class="sim-car"><rect x="' + carX + '" y="230" width="72" height="35" rx="10" fill="#27849b"/><circle cx="' + (carX + 16) + '" cy="270" r="12" fill="#4b5c62"/><circle cx="' + (carX + 57) + '" cy="270" r="12" fill="#4b5c62"/></g><text x="80" y="320" class="component-label">0cm</text><text x="490" y="320" class="component-label">200cm</text><line class="distance-line" x1="92" y1="305" x2="' + (92 + distance * 2.0) + '" y2="305" stroke="#27849b" stroke-width="6"/>' +
+          '<path d="M70 270 H570" stroke="#78949a" stroke-width="5"/><path d="M70 287 H570" stroke="#c5d9d9" stroke-width="2"/><g class="sim-car drag-handle" role="slider" tabindex="0" aria-label="車を左右に動かして力を調整" aria-valuemin="0" aria-valuemax="100"><rect x="' + carX + '" y="230" width="72" height="35" rx="10" fill="#27849b"/><circle cx="' + (carX + 16) + '" cy="270" r="12" fill="#4b5c62"/><circle cx="' + (carX + 57) + '" cy="270" r="12" fill="#4b5c62"/></g><text x="80" y="320" class="component-label">0cm</text><text x="490" y="320" class="component-label">200cm</text><line class="distance-line" x1="92" y1="305" x2="' + (92 + distance * 2.0) + '" y2="305" stroke="#27849b" stroke-width="6"/>' +
         '</svg>';
       core.renderReadout(view.readout, {
         metrics: [
@@ -215,6 +215,37 @@
       });
       view.setTrial({ condition: (state.source === "wind" ? "風" : "ゴム") + "・力 " + state.force + "%", result: distance + "cm進んだ" });
     }
+    let draggingCar = false;
+    const stage = view.stage;
+    stage.addEventListener("pointerdown", event => {
+      if (!event.target.closest || !event.target.closest(".sim-car")) return;
+      draggingCar = true;
+      if (stage.setPointerCapture) stage.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    });
+    stage.addEventListener("pointermove", event => {
+      if (!draggingCar) return;
+      const svg = stage.querySelector("svg");
+      if (!svg) return;
+      const rect = svg.getBoundingClientRect();
+      if (!rect.width) return;
+      const x = (event.clientX - rect.left) * 640 / rect.width;
+      const distance = clamp((x - 92 - 36) / 2, 0, 200);
+      state.force = Math.round(state.source === "wind" ? distance / 2 : Math.sqrt(distance * 50));
+      force.set(state.force);
+      draw();
+    });
+    const stopDraggingCar = () => { draggingCar = false; };
+    stage.addEventListener("pointerup", stopDraggingCar);
+    stage.addEventListener("pointercancel", stopDraggingCar);
+    stage.addEventListener("lostpointercapture", stopDraggingCar);
+    stage.addEventListener("keydown", event => {
+      if (!event.target.closest || !event.target.closest(".sim-car") || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault();
+      state.force = clamp(state.force + (event.key === "ArrowRight" ? 5 : -5), 0, 100);
+      force.set(state.force);
+      draw();
+    });
     return {
       render: draw,
       reset: () => { state.force = 55; state.source = "wind"; source.set(state.source); force.set(state.force); draw(); },
@@ -415,7 +446,7 @@
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="磁石の極と材料による動きのシミュレーション">' +
           '<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#bd5550"/></marker></defs><rect width="640" height="360" fill="#fff1f0"/><text x="28" y="42" class="scene-title">磁石を近づけると、どう動く？</text><text x="30" y="80" class="scene-caption">' + state.poleA + "極と" + state.poleB + "極・距離 " + state.distance + "cm</text>" +
-          '<g class="magnet-left ' + (opposite ? "attract" : "repel") + '"><rect x="170" y="105" width="110" height="60" rx="12" fill="' + (state.poleA === "N" ? "#db6d67" : "#668bc0") + '"/><text x="216" y="143" fill="#fff" class="component-label">' + state.poleA + '</text></g><g class="magnet-right ' + (opposite ? "attract" : "repel") + '"><rect x="' + rightX + '" y="105" width="110" height="60" rx="12" fill="' + (state.poleB === "N" ? "#db6d67" : "#668bc0") + '"/><text x="' + (rightX + 46) + '" y="143" fill="#fff" class="component-label">' + state.poleB + '</text></g>' + arrow +
+          '<g class="magnet-left ' + (opposite ? "attract" : "repel") + '"><rect x="170" y="105" width="110" height="60" rx="12" fill="' + (state.poleA === "N" ? "#db6d67" : "#668bc0") + '"/><text x="216" y="143" fill="#fff" class="component-label">' + state.poleA + '</text></g><g class="magnet-right drag-handle ' + (opposite ? "attract" : "repel") + '" role="slider" tabindex="0" aria-label="右の磁石を左右に動かして距離を調整" aria-valuemin="20" aria-valuemax="100"><rect x="' + rightX + '" y="105" width="110" height="60" rx="12" fill="' + (state.poleB === "N" ? "#db6d67" : "#668bc0") + '"/><text x="' + (rightX + 46) + '" y="143" fill="#fff" class="component-label">' + state.poleB + '</text></g>' + arrow +
           '<circle class="magnet-test-object ' + (state.material === "iron" ? "sticks" : "") + '" cx="320" cy="250" r="28" fill="' + (state.material === "iron" ? "#a2abb0" : "#d3c2a0") + '" stroke="#6f7779" stroke-width="4"/><text x="300" y="310" class="component-label">' + (state.material === "iron" ? "鉄" : "アルミ") + "：" + (state.material === "iron" ? "つく" : "つかない") + '</text>' +
         '</svg>';
       core.renderReadout(view.readout, {
@@ -428,6 +459,36 @@
       });
       view.setTrial({ condition: state.poleA + "極と" + state.poleB + "極・距離 " + state.distance + "cm・" + (state.material === "iron" ? "鉄" : "アルミ"), result: (opposite ? "引き合う" : "しりぞけ合う") + "・引き付け " + (state.material === "iron" ? force : 0) + " / 100" });
     }
+    let draggingMagnet = false;
+    const magnetStage = view.stage;
+    magnetStage.addEventListener("pointerdown", event => {
+      if (!event.target.closest || !event.target.closest(".magnet-right")) return;
+      draggingMagnet = true;
+      if (magnetStage.setPointerCapture) magnetStage.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    });
+    magnetStage.addEventListener("pointermove", event => {
+      if (!draggingMagnet) return;
+      const svg = magnetStage.querySelector("svg");
+      if (!svg) return;
+      const rect = svg.getBoundingClientRect();
+      if (!rect.width) return;
+      const x = (event.clientX - rect.left) * 640 / rect.width;
+      state.distance = Math.round(clamp((x - 350) / 1.15, 20, 100));
+      distance.set(state.distance);
+      draw();
+    });
+    const stopDraggingMagnet = () => { draggingMagnet = false; };
+    magnetStage.addEventListener("pointerup", stopDraggingMagnet);
+    magnetStage.addEventListener("pointercancel", stopDraggingMagnet);
+    magnetStage.addEventListener("lostpointercapture", stopDraggingMagnet);
+    magnetStage.addEventListener("keydown", event => {
+      if (!event.target.closest || !event.target.closest(".magnet-right") || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault();
+      state.distance = clamp(state.distance + (event.key === "ArrowRight" ? 5 : -5), 20, 100);
+      distance.set(state.distance);
+      draw();
+    });
     return {
       render: draw,
       reset: () => { state.poleA = "N"; state.poleB = "S"; state.distance = 50; state.material = "iron"; poleA.set(state.poleA); poleB.set(state.poleB); distance.set(state.distance); material.set(state.material); draw(); },
