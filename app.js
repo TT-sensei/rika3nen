@@ -410,7 +410,7 @@
     if (labLoadPromise) return labLoadPromise;
     labLoadPromise = new Promise((resolve, reject) => {
       const script = document.createElement("script");
-      script.src = "labs/index.js";
+      script.src = "labs/index.js?v=sim-review-20261011";
       script.onload = () => window.RikaLabRouter ? resolve(window.RikaLabRouter) : reject(new Error("LABを読み込めませんでした"));
       script.onerror = () => reject(new Error("LABを読み込めませんでした"));
       document.head.append(script);
@@ -423,7 +423,8 @@
     app.innerHTML = `<section class="lab-loading"><span class="lab-loading-mark" aria-hidden="true">⌛</span><h1>LABを準備しています</h1><p>実験道具を読み込んでいます。</p></section>`;
     loadLabRouter().then(async router => {
       if (token !== labRenderToken || parseRoute().page !== "lab") return;
-      await router.render(route, app, { routeTo, showToast, escapeHtml });
+      await router.render(route, app, { routeTo, showToast, escapeHtml, isCurrent: () => token === labRenderToken && parseRoute().page === "lab" && parseRoute().labId === route.labId });
+      if (token !== labRenderToken || parseRoute().page !== "lab" || parseRoute().labId !== route.labId) return;
       app.focus({ preventScroll: true });
       window.scrollTo({ top: 0, behavior: "smooth" });
     }).catch(() => {
@@ -435,6 +436,7 @@
 
   function render() {
     const route = parseRoute();
+    if (route.page !== "lab") labRenderToken += 1;
     app.classList.toggle("lab-main", route.page === "lab");
     if (route.page !== "lab") window.RikaLabRouter?.leave?.();
     if (route.page === "unit") renderUnit(route);
