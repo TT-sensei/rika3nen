@@ -428,3 +428,82 @@ body{background:radial-gradient(circle at 95% 0,#cfeef7 0 14rem,transparent 14re
   .instant-lab .sim-stage svg{touch-action:auto}
   .trial-list b,.trial-list small{white-space:normal}
 }
+
+
+/* Free-play refresh: less reading, more hands-on exploring on tablets. */
+.instant-lab .lab-titlebar{gap:12px}
+.instant-lab .lab-titlebar>div:first-child{min-width:0}
+.instant-lab .lab-titlebar .eyebrow{letter-spacing:.04em}
+.experiment-counter{flex:0 0 auto;display:flex;align-items:baseline;gap:4px;padding:7px 12px;border:1px solid #a8dfc0;border-radius:999px;background:#e6f8ee;color:#176044;white-space:nowrap}
+.experiment-counter b{font-size:1.1rem;font-variant-numeric:tabular-nums}
+.experiment-counter small{font-size:.68rem;font-weight:800}
+.experiment-counter.is-bumped{animation:experimentBump .28s cubic-bezier(.2,.9,.3,1.35)}
+@keyframes experimentBump{50%{transform:scale(1.08);background:#d0f3dd}}
+.instant-lab .control-heading h2{font-size:1.05rem}
+.instant-lab .control-heading>p:not(.eyebrow){display:none}
+.instant-lab .control-section{margin-bottom:8px;padding:9px 10px;border-radius:12px;background:#fbfeff}
+.instant-lab .control-section>h3,
+.instant-lab .control-section>p{display:none}
+.instant-lab .range-control{margin:7px 0}
+.instant-lab .range-control>span{align-items:center;font-size:.84rem}
+.instant-lab .range-control output{padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--lab-accent) 12%,white);font-size:.84rem}
+.instant-lab .range-control input{height:38px;min-height:44px;margin:0;touch-action:pan-y}
+.instant-lab .segmented-control>span{margin-bottom:5px;font-size:.84rem}
+.instant-lab .segmented-control>div{gap:7px}
+.instant-lab .segmented-control button{min-height:44px;border-radius:12px;font-size:.8rem;font-weight:800;touch-action:manipulation}
+.instant-lab .segmented-control button[aria-pressed=true]{box-shadow:inset 0 0 0 1px var(--lab-accent)}
+.instant-lab .sim-actions{flex-wrap:wrap;align-items:center}
+.instant-lab .sim-actions button{min-height:42px;padding:0 12px;border-radius:12px;font-size:.78rem;font-weight:800;touch-action:manipulation}
+.instant-lab .sim-actions .randomize-button{border:1px solid #e7af35;background:linear-gradient(135deg,#fff4c6,#ffe294);color:#664711;box-shadow:0 3px 0 #e2b94b}
+.instant-lab .sim-actions .randomize-button:active{transform:translateY(2px);box-shadow:0 1px 0 #e2b94b}
+.instant-lab .mission-details,
+.instant-lab .trial-panel,
+.instant-lab .model-disclosure{margin-top:8px;padding:7px 10px;border:1px solid #d6e4e9;border-radius:12px;background:#f8fcfd}
+.instant-lab details>summary{display:flex;align-items:center;gap:8px;min-height:34px;cursor:pointer;color:#34596a;font-size:.76rem;font-weight:800;list-style-position:inside}
+.instant-lab details>summary::marker{color:var(--lab-accent)}
+.instant-lab .mission-details[open],
+.instant-lab .trial-panel[open],
+.instant-lab .model-disclosure[open]{padding-bottom:9px}
+.instant-lab .discovery-mission{margin-top:5px;padding:8px;background:#fff;box-shadow:none}
+.instant-lab .mission-heading b{font-size:.78rem}
+.instant-lab .mission-dots button{width:38px;height:38px;font-size:.8rem;touch-action:manipulation}
+.instant-lab .trial-heading{margin-top:5px}
+.instant-lab .trial-list{margin-top:8px}
+.instant-lab .model-note{margin:7px 2px 0;display:block;font-size:.75rem;line-height:1.5}
+.instant-lab .instant-readout-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.instant-lab .instant-result{border-radius:12px;background:#f3f9fb;padding:8px 11px}
+.instant-lab .instant-result>strong{font-size:.72rem;color:var(--lab-accent)}
+.instant-lab .instant-result>p{margin:2px 0 0;font-size:.84rem;line-height:1.45}
+.instant-lab .sim-stage{background:linear-gradient(145deg,#f5fcff,#e6f4f8)}
+.instant-lab .sim-stage svg{touch-action:pan-y}
+.instant-lab .sim-stage.is-changing svg{filter:drop-shadow(0 2px 0 color-mix(in srgb,var(--lab-accent) 12%,transparent))}
+.instant-lab .trial-panel .trial-heading h3{font-size:.8rem}
+@media(max-width:900px){
+  .instant-lab .lab-workspace{height:auto;min-height:0;grid-template-columns:minmax(0,1fr);gap:10px}
+  .instant-lab .simulation-column{height:auto;display:flex;flex-direction:column}
+  .instant-lab .sim-stage{min-height:280px}
+  .instant-lab .extra-svg{width:100%;height:auto;min-height:280px;max-height:460px}
+  .instant-lab .sim-readout{min-height:0;padding:10px}
+  .instant-lab .instant-panel{height:auto;max-height:none;overflow:visible;padding:14px}
+  .instant-lab .sim-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px 10px 12px}
+  .instant-lab .sim-actions button{min-width:0;padding:0 5px;font-size:.72rem;white-space:normal}
+  .instant-lab .sim-actions button:first-child{margin-right:0}
+  .instant-lab .trial-panel{margin-top:9px}
+}
+@media(max-width:560px){
+  .instant-lab .lab-titlebar{align-items:center}
+  .instant-lab .lab-titlebar h1{font-size:1.25rem}
+  .experiment-counter{gap:3px;padding:6px 9px}
+  .experiment-counter b{font-size:1rem}
+  .experiment-counter small{font-size:.62rem}
+  .instant-lab .sim-stage{min-height:245px}
+  .instant-lab .extra-svg{min-height:245px}
+  .instant-lab .instant-readout-grid{gap:6px}
+  .instant-lab .instant-metric{padding:8px}
+  .instant-lab .instant-metric b{font-size:.88rem}
+  .instant-lab .sim-actions button{min-height:46px;font-size:.68rem;line-height:1.2}
+}
+@media(prefers-reduced-motion:reduce){
+  .experiment-counter.is-bumped{animation:none}
+  .instant-lab .sim-actions .randomize-button:active{transform:none}
+}
