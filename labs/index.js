@@ -2,13 +2,13 @@
   "use strict";
 
   const MANIFESTS = {
-    living: { id:"living", title:"生き物LAB", unit:"身近な生き物", icon:"🔎", summary:"明るさ・湿り方・植物を変えて、見つかる生き物のようすを比べます。", accent:"#43835a", modelNote:"生き物の数や活動を、すみかの条件との関係が見えやすいように単純化したモデルです。" },
+    living: { id:"living", title:"生き物LAB", unit:"身近な生き物", icon:"🔎", summary:"明るさ・湿り方・植物を変えて、見つかる生き物のようすを比べます。", accent:"#43835a", modelNote:"見つかりやすさは環境との関係を考えるためのモデル値で、実際に見つかる数を予測するものではありません。" },
     plants: { id:"plants", title:"植物LAB", unit:"植物の育ち", icon:"🌱", summary:"日数や植物の種類を変えて、育つ順序と体のつくりを見ます。", accent:"#4f934b", modelNote:"種から芽、葉、花、実へと育つ順序と、根・茎・葉のつくりを見やすく単純化しています。実際の速さには幅があります。" },
     insects: { id:"insects", title:"昆虫LAB", unit:"昆虫の育ちと体", icon:"🦋", summary:"育ち方と体のつくりを切り替えて、共通点や違いを比べます。", accent:"#b87835", modelNote:"昆虫の育ちの順序と、頭・胸・腹、6本の足という共通点を見やすく表しています。" },
-    windrubber: { id:"windrubber", title:"風とゴムLAB", unit:"風とゴムの力", icon:"💨", summary:"風の強さやゴムの伸びを変えて、車の動く距離を比べます。", accent:"#27849b", modelNote:"風やゴムの力と動く距離の関係を、条件を一つずつ変えて比べるモデルです。" },
-    sound: { id:"sound", title:"音LAB", unit:"音のせいしつ", icon:"🔔", summary:"はじく強さや音の伝わり方を変えて、ふるえと音の関係を見ます。", accent:"#8a64a7", modelNote:"音を出す物のふるえと、音が伝わる様子を観察しやすくしたモデルです。" },
+    windrubber: { id:"windrubber", title:"風とゴムLAB", unit:"風とゴムの力", icon:"💨", summary:"風の強さやゴムの伸びを変えて、車の動く距離を比べます。", accent:"#27849b", modelNote:"距離は条件の違いを比べるためのモデル値です。実際の距離は車や床、風、ゴムの条件によって変わります。" },
+    sound: { id:"sound", title:"音LAB", unit:"音のせいしつ", icon:"🔔", summary:"はじく強さや音の伝わり方を変えて、ふるえと音の関係を見ます。", accent:"#8a64a7", modelNote:"ふるえと糸電話での伝わりやすさは、違いを比べるためのモデル値です。実際の音量や音の伝わり方を測定した値ではありません。" },
     sun: { id:"sun", title:"太陽LAB", unit:"太陽と地面", icon:"☀️", summary:"時刻や見るものを変えて、太陽の位置・影・地面の温度を比べます。", accent:"#d18524", modelNote:"太陽の位置と影の向き、日光による地面の温度変化を単純化しています。太陽を直接見ないでください。" },
-    light: { id:"light", title:"光LAB", unit:"光のせいしつ", icon:"🪞", summary:"鏡の向きや枚数を変えて、反射した光の進み方を比べます。", accent:"#d3a01e", modelNote:"光の反射と、光を重ねたときの明るさを比べやすく表しています。人や道路へ光を向けないでください。" },
+    light: { id:"light", title:"光LAB", unit:"光のせいしつ", icon:"🪞", summary:"鏡の枚数や光が届く高さを変えて、反射した光の進み方を比べます。", accent:"#d3a01e", modelNote:"それぞれの鏡の向きを調整して光を同じ高さに集めるモデルです。明るさは比較用の目安です。人や道路へ光を向けないでください。" },
     electricity: { id:"electricity", title:"電気LAB", unit:"電気の通り道", icon:"💡", summary:"回路のつながりや材料を変えて、豆電球の点灯を確かめます。", accent:"#b88a12", modelNote:"乾電池・導線・豆電球の回路と、材料による電気の通しやすさを単純化しています。" },
     magnets: { id:"magnets", title:"磁石LAB", unit:"磁石のせいしつ", icon:"🧲", summary:"極の組み合わせや距離、材料を変えて、磁石の動きを比べます。", accent:"#bd5550", modelNote:"磁石の極の組み合わせと、鉄を引き付ける力の変化を見やすく表しています。" },
     weight: { id:"weight", title:"重さLAB", unit:"物と重さ", icon:"⚖️", summary:"形・量・材料を変えて、重さの変化を比べます。", accent:"#607483", modelNote:"形を変えても量が同じなら重さは変わらず、材料で重さが変わる関係を単純化しています。" }
@@ -45,7 +45,7 @@
       "影がいちばん短くなる時刻を探そう。"
     ],
     "light": [
-      "鏡の向きを少しずつ変え、光が届く場所を探そう。",
+      "光が届く高さを変え、反射した光の道すじを比べよう。",
       "鏡1枚と2枚で、光の進み方を比べよう。",
       "光が鏡で曲がるときの決まりを見つけよう。"
     ],
@@ -69,6 +69,7 @@
   const UNIT_ORDER = ["living","plants","insects","windrubber","sound","sun","light","electricity","magnets","weight"];
   const loaded = new Map();
   let activeCleanup = null;
+  let renderRequest = 0;
 
   function loadScript(src) {
     if (loaded.has(src)) return loaded.get(src);
@@ -101,6 +102,8 @@
   }
 
   async function render(route, root, host) {
+    const request = ++renderRequest;
+    const isCurrent = () => request === renderRequest && (!host.isCurrent || host.isCurrent());
     if (activeCleanup) { activeCleanup(); activeCleanup = null; }
     if (!route.labId) { root.innerHTML = catalog(); return null; }
     const manifest = MANIFESTS[route.labId];
@@ -109,8 +112,10 @@
       return null;
     }
     root.innerHTML = '<section class="lab-loading"><span class="lab-loading-mark" aria-hidden="true">' + manifest.icon + '</span><h1>' + manifest.title + 'を準備しています</h1><p>このLABに必要な実験道具だけを読み込んでいます。</p></section>';
-    if (!window.RikaThreeLabCore) await loadScript("labs/lab-core.js");
-    if (!window.RikaThreeSimulations) await loadScript("labs/third-labs.js");
+    if (!window.RikaThreeLabCore) await loadScript("labs/lab-core.js?v=sim-review-20261011");
+    if (!isCurrent()) return null;
+    if (!window.RikaThreeSimulations) await loadScript("labs/third-labs.js?v=sim-review-20261011");
+    if (!isCurrent()) return null;
     const factory = window.RikaThreeSimulations && window.RikaThreeSimulations[manifest.id];
     if (!factory) throw new Error("Simulation factory missing");
     activeCleanup = factory.mount(root, Object.assign({}, { core: window.RikaThreeLabCore, host, manifest }));
@@ -118,6 +123,7 @@
   }
 
   function leave() {
+    renderRequest += 1;
     if (activeCleanup) { activeCleanup(); activeCleanup = null; }
   }
 
