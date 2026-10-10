@@ -176,7 +176,7 @@
       view.stage.innerHTML =
         '<svg class="extra-svg" viewBox="0 0 640 360" role="img" aria-label="' + data.label + 'の育ち方と体のつくりのシミュレーション">' +
           '<rect width="640" height="360" fill="#f2faed"/><rect y="274" width="640" height="86" fill="#b99a72"/>' +
-          '<text x="28" y="42" class="scene-title">時間がたつと、どこが変わる？</text><text x="30" y="80" class="scene-caption">' + data.label + '・' + state.day + '日目・' + stageName + '</text>' +
+          '<text x="28" y="42" class="scene-title">時間がたつと、どこが変わる？</text><text x="30" y="80" class="scene-caption">' + data.label + '・' + state.day + '日目・' + stageName + '</text><text x="28" y="110" class="tiny-label">植物を上にドラッグすると育ちが進むよ</text>' +
           '<g class="plant-growth-target drag-handle" role="slider" tabindex="0" aria-label="植物を上下に動かして育ちの日数を調整" aria-valuemin="0" aria-valuemax="63" aria-valuenow="' + state.day + '">' + (state.day === 0 ? '<ellipse cx="320" cy="268" rx="24" ry="12" fill="#8e6b42"/>' : '<path class="sim-plant-stem" d="M320 274 V' + (274 - height) + '" stroke="' + data.stem + '" stroke-width="12" stroke-linecap="round"/>' + leafMarks + flower + fruit) + '</g>' +
           roots + labels +
         '</svg>';
