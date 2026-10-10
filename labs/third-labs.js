@@ -304,7 +304,7 @@
     const angle = core.range(section, { label: "壁で光が届く高さ", min: 100, max: 270, value: state.angle, format: value => value < 145 ? "上" : value > 215 ? "下" : "中央", onInput: value => { state.angle = value; draw(); } });
     const mirrors = core.options(section, { label: "同じ場所へ向ける鏡", values: [option("1", "1枚"), option("2", "2枚"), option("3", "3枚")], value: String(state.mirrors), format: item => item.label, onChange: value => { state.mirrors = Number(value); draw(); } });
     function draw() {
-      const sourceX = 131, sourceY = 188, mirrorX = 282, wallX = 570;
+      const sourceX = 131, sourceY = 224, mirrorX = 282, wallX = 570;
       const targetY = state.angle;
       const targetZone = targetY < 145 ? "上" : targetY > 215 ? "下" : "中央";
       const mirrorYs = state.mirrors === 1 ? [188] : state.mirrors === 2 ? [158, 218] : [132, 188, 244];
@@ -332,7 +332,7 @@
           '<defs><marker id="rayArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#d99a16"/></marker><radialGradient id="lightSpot"><stop offset="0" stop-color="#fff9ba" stop-opacity="1"/><stop offset=".55" stop-color="#f8dc60" stop-opacity=".8"/><stop offset="1" stop-color="#f8dc60" stop-opacity="0"/></radialGradient></defs>' +
           '<rect width="640" height="360" fill="#fffbea"/><text x="28" y="38" class="scene-title">光の道すじを線でたどろう</text><text x="30" y="72" class="scene-caption">鏡 ' + state.mirrors + '枚 → 壁の' + targetZone + 'に届く</text>' +
           '<rect x="564" y="82" width="24" height="210" rx="6" fill="#e8e0cf" stroke="#9c8f79" stroke-width="3"/><path d="M590 82 V292" stroke="#c9bda6" stroke-width="2"/>' +
-          '<g transform="translate(45 164)"><rect width="58" height="48" rx="12" fill="#486a75"/><path d="M57 8 L86 15 V33 L57 40Z" fill="#79939b"/><circle cx="18" cy="24" r="7" fill="#d5eef2"/></g>' +
+          '<g transform="translate(45 200)"><rect width="58" height="48" rx="12" fill="#486a75"/><path d="M57 8 L86 15 V33 L57 40Z" fill="#79939b"/><circle cx="18" cy="24" r="7" fill="#d5eef2"/></g>' +
           paths + '<circle class="light-spot" cx="' + wallX + '" cy="' + targetY + '" r="' + (25 + state.mirrors * 5) + '" fill="url(#lightSpot)"/>' + rings +
           '<g class="diagram-key"><rect x="32" y="300" width="576" height="42" rx="12" fill="#fff" opacity=".93"/><text x="50" y="326" class="component-label">① 光を出す</text><text x="185" y="326" class="component-label">② 鏡に当たる</text><text x="335" y="326" class="component-label">③ はね返る</text><text x="475" y="326" class="component-label">④ 壁に届く</text></g>' +
         '</svg>';
