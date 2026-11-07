@@ -1,42 +1,34 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#173f50">
-  <meta name="description" content="小学3年生理科を、シミュレーションで動かして確かめ、問題で整理するブラウザ完結型の教材です。">
-  <title>理科ラボ 3｜動かして、比べて、発見しよう</title>
-  <link rel="stylesheet" href="style.css?v=tablet-full-width-20261011">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>理科ラボ 3 | 小学3年 理科</title>
+<link rel="stylesheet" href="https://tt-sensei.github.io/edu-effects/css/edu-effects.css">
+<link rel="stylesheet" href="https://tt-sensei.github.io/edu-effects/css/edu-feedback.css">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <a class="skip-link" href="#app">学習内容へ移動</a>
-  <header class="site-header">
-    <button id="homeButton" class="brand" type="button" aria-label="単元一覧へ戻る">
-      <span class="brand-mark" aria-hidden="true">3</span>
-      <span><b>理科ラボ</b><small>くらべて、予想して、発見をまとめる</small></span>
-    </button>
-    <div class="header-actions">
-      <button id="labButton" class="header-button lab-header-button" type="button">LAB</button>
-      <button id="reviewButton" class="header-button" type="button">まとめチェック</button>
-      <button id="settingsButton" class="icon-button" type="button" aria-label="設定">⚙</button>
-    </div>
-  </header>
+<header class="app-header">
+  <button class="brand" type="button" data-action="home" aria-label="トップへもどる">
+    <span class="brand-mark" aria-hidden="true">🔬</span>
+    <span class="brand-text"><b>理科ラボ 3</b><small>小学3年・理科</small></span>
+  </button>
+  <div class="header-actions">
+    <button class="toggle-button" type="button" data-action="toggle-sound" aria-pressed="true">🔊 音 ON</button>
+    <button class="toggle-button" type="button" data-action="toggle-furigana" aria-pressed="true">ふりがな ON</button>
+  </div>
+</header>
+<main id="app" class="app-main"></main>
+<div id="overlay-root"></div>
 
-  <main id="app" tabindex="-1" aria-live="polite"></main>
-
-  <dialog id="settingsDialog" class="settings-dialog">
-    <form method="dialog">
-      <div class="dialog-head"><h2>設定</h2><button class="icon-button" value="cancel" aria-label="閉じる">×</button></div>
-      <p>学習記録は、この端末のブラウザ内だけに保存されます。</p>
-      <label class="toggle-row"><span><b>効果音</b><small>正解・不正解を短い音で知らせます</small></span><input id="soundToggle" type="checkbox" role="switch"></label>
-      <button id="resetButton" class="danger-button" type="button">学習記録をすべて消す</button>
-    </form>
-  </dialog>
-
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="units.js"></script>
-  <script src="gamification.js"></script>
-  <script src="asset-rewards.js?v=clean-collections-20260826"></script>
-  <script src="app.js?v=free-play-20261011"></script>
+<script src="units.js"></script>
+<script src="gamification.js"></script>
+<script src="labs/manifests.js"></script>
+<script src="labs/lab-core.js"></script>
+<script src="labs/third-labs.js"></script>
+<script src="js/furigana.js"></script>
+<script src="https://tt-sensei.github.io/edu-effects/js/edu-effects.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

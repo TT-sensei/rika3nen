@@ -8,8 +8,8 @@
   function shell(root, manifest, { onHome } = {}) {
     root.innerHTML =
       '<section class="lab-screen instant-lab" style="--lab-accent:' + esc(manifest.accent || "#2a8068") + '">' +
-        '<nav class="breadcrumbs" aria-label="現在位置"><button class="text-button" type="button" data-lab-home>シミュレーション一覧</button><span>›</span><span>' + esc(manifest.title) + '</span></nav>' +
-        '<header class="lab-titlebar"><div><p class="eyebrow">🧪 自由にためす / ' + esc(manifest.unit) + '</p><h1>' + esc(manifest.title) + '</h1></div><div class="experiment-counter" aria-live="polite"><b data-experiment-count>0</b><small>回ためした</small></div><button class="secondary-button lab-back" type="button" data-lab-home>一覧へ戻る</button></header>' +
+        '<nav class="breadcrumbs" aria-label="現在位置"><button class="text-button" type="button" data-lab-home>単元ページ</button><span>›</span><span>' + esc(manifest.title) + '</span></nav>' +
+        '<header class="lab-titlebar"><div><p class="eyebrow">🧪 自由にためす / ' + esc(manifest.unit) + '</p><h1>' + esc(manifest.title) + '</h1></div><div class="experiment-counter" aria-live="polite"><b data-experiment-count>0</b><small>回ためした</small></div><button class="secondary-button lab-back" type="button" data-lab-home>単元ページへ</button></header>' +
         '<div class="lab-workspace"><section class="simulation-column" aria-label="シミュレーション"><div class="sim-stage" data-sim-stage></div><div class="sim-readout" data-sim-readout aria-live="polite"></div><div class="sim-actions" data-sim-actions></div></section><aside class="control-panel instant-panel" aria-label="実験の操作"><div class="control-heading"><p class="eyebrow">TRY & PLAY</p><h2>さわってみよう</h2></div><div data-control-panel></div><details class="trial-panel" aria-labelledby="trialTitle"><summary>📒 実験ノート</summary><div class="trial-heading"><h3 id="trialTitle">くらべた結果</h3><button type="button" data-clear-trials>記録を消す</button></div><div class="trial-list" data-trial-list aria-live="polite"><p>気になる条件を変えて、結果を記録してみよう。</p></div></details></aside></div>' +
         '<details class="model-disclosure"><summary>このシミュレーションについて</summary><p class="model-note" data-model-note></p></details></section>';
     const view = root.querySelector(".lab-screen");
@@ -211,6 +211,7 @@
   }
 
   function renderReadout(target, config) {
+    try { if (typeof window.RikaLabComment === "function") window.RikaLabComment(config && config.message ? String(config.message) : ""); } catch (_) {}
     const metrics = config.metrics || [];
     target.innerHTML = '<div class="instant-readout-grid">' + metrics.map(metric =>
       '<div class="instant-metric"><span>' + esc(metric.label) + '</span><b>' + esc(metric.value) + '</b>' + (metric.detail ? '<small>' + esc(metric.detail) + '</small>' : '') + '</div>'
