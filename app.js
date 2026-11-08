@@ -54,7 +54,8 @@ function defaultState() {
     discoveries: {},
     done: {},       // "unitId.phase" -> true
     mistakes: [],   // [{unitId, phase, qid}] 選択問題のみ
-    labVisits: {}   // unitId -> 回数
+    labVisits: {},  // unitId -> 回数
+    labMissions: {} // unitId -> { missionId: true } LABのあそびミッション達成
   };
 }
 function loadState() {
@@ -68,6 +69,7 @@ function loadState() {
     if (raw.discoveries && typeof raw.discoveries === "object") d.discoveries = raw.discoveries;
     if (raw.done && typeof raw.done === "object") d.done = raw.done;
     if (raw.labVisits && typeof raw.labVisits === "object") d.labVisits = raw.labVisits;
+    if (raw.labMissions && typeof raw.labMissions === "object") d.labMissions = raw.labMissions;
     d.mistakes = Array.isArray(raw.mistakes)
       ? raw.mistakes.filter(m => m && QUESTION_BY_KEY.has(m.unitId + "." + m.phase + "." + m.qid))
       : [];
@@ -610,13 +612,14 @@ function renderRecords() {
   <section class="records-list">
     ${UNITS.map(unit => {
       const doneCount = PHASE_ORDER.filter(p => state.done[unit.id + "." + p]).length;
-      const disc = ["knowledge", "preparation", "consideration"].filter(p => state.discoveries[unit.id + "." + p]).length + (state.discoveries["major." + unit.id] ? 1 : 0);
+      const unitCatalog = GAME.catalogItems(state.discoveries).filter(i => i.unitId === unit.id);
+      const disc = unitCatalog.filter(i => i.found).length;
       return `<article class="record-row" style="--unit:${unit.color};--unit-pale:${unit.pale}">
         <span class="unit-icon" aria-hidden="true">${unit.icon}</span>
         <div class="record-main"><b>${esc(unit.title)}</b>
           <span>${PHASE_ORDER.map(p => `<span class="record-phase ${state.done[unit.id + "." + p] ? "is-done" : ""}">${PHASES[p].num}${PHASES[p].label}${state.done[unit.id + "." + p] ? " ✓" : ""}</span>`).join("")}</span>
         </div>
-        <div class="record-side"><span>進み ${doneCount} / 3</span><span>発見 ${disc} / 4</span><span>まちがい ${unitMistakeCount(unit.id)}件</span><span>LAB ${state.labVisits[unit.id] || 0}回</span></div>
+        <div class="record-side"><span>進み ${doneCount} / 3</span><span>発見 ${disc} / ${unitCatalog.length}</span><span>まちがい ${unitMistakeCount(unit.id)}件</span><span>LAB ${state.labVisits[unit.id] || 0}回</span></div>
         <button class="secondary-button" type="button" data-action="open-unit" data-unit="${unit.id}">開く</button>
       </article>`;
     }).join("")}
@@ -630,14 +633,14 @@ function renderCatalog() {
   view = { name: "catalog" };
   root.innerHTML = `
   <nav class="crumbs"><button class="text-button" type="button" data-action="home">← トップ</button></nav>
-  <section class="page-head"><div><h1>🔍 発見図鑑 ${found} / ${items.length}</h1><p>フェイズを進めると発見が集まります。単元を全部進めると「大発見」です。</p></div></section>
+  <section class="page-head"><div><h1>🔍 発見図鑑 ${found} / ${items.length}</h1><p>フェイズを進めると発見が集まります。単元を全部進めると「大発見」。LABのあそびミッションでも発見が増えます。</p></div></section>
   <section class="discovery-grid">
     ${items.map(item => {
       const unit = UNIT_BY_ID.get(item.unitId);
       return `<article class="discovery-card ${item.found ? "is-found" : ""}" style="--unit:${unit.color};--unit-pale:${unit.pale}">
-        <span class="discovery-icon">${item.found ? (item.kind === "major" ? "★" : "🔍") : "？"}</span>
+        <span class="discovery-icon">${item.found ? (item.kind === "major" ? "★" : item.kind === "lab" ? "🎯" : "🔍") : "？"}</span>
         <b>${item.found ? esc(item.title) : "？？？"}</b>
-        <small>${esc(unit.title)}｜${item.found ? esc(item.text) : "この単元の学習を進めると見つかるよ"}</small>
+        <small>${esc(unit.title)}｜${item.found ? esc(item.text) : (item.kind === "lab" ? "LABのあそびミッションで見つかるよ" : "この単元の学習を進めると見つかるよ")}</small>
       </article>`;
     }).join("")}
   </section>`;
@@ -675,6 +678,26 @@ function renderLab(unitId) {
       el.textContent = message;
       document.body.append(el);
       setTimeout(() => el.remove(), 1800);
+    },
+    missionDone: (mUnitId, missionId) => Boolean(state.labMissions[mUnitId] && state.labMissions[mUnitId][missionId]),
+    onMission: (mUnitId, mission) => {
+      if (!state.labMissions[mUnitId]) state.labMissions[mUnitId] = {};
+      if (state.labMissions[mUnitId][mission.id]) return;
+      state.labMissions[mUnitId][mission.id] = true;
+      const xpKey = "labmission." + mUnitId + "." + mission.id;
+      if (!state.xpRewards[xpKey]) {
+        state.xpRewards[xpKey] = true;
+        const before = GAME.rankInfo(state.xp);
+        state.xp += GAME.LAB_MISSION_XP;
+        const after = GAME.rankInfo(state.xp);
+        if (after.index > before.index) {
+          pendingNotices.push({ kind: "rank", title: after.name + " になった！", text: "研究XP " + after.xp + " XP。次の発見も楽しみだね。" });
+        }
+      }
+      queueDiscovery("lab." + mUnitId + "." + mission.id, mission.title, mission.text, "discovery");
+      persist();
+      sounds.play("correct");
+      host.showToast("🎉 ミッション達成！ 発見図鑑に記録したよ");
     }
   };
   const startedAt = Date.now();

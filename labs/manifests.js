@@ -67,6 +67,63 @@
     ]
   };
   Object.entries(CHALLENGES).forEach(([id, items]) => { if (MANIFESTS[id]) MANIFESTS[id].challenges = items; });
+
+  // あそびミッション：LABの中で試行錯誤して達成する遊び。達成すると発見図鑑に記録される。
+  // title＝ミッション文、text＝達成したときに図鑑へ残る「発見」の一文。
+  // 達成判定そのものは labs/third-labs.js の MISSION_CHECKS が単元ごとに持つ。
+  const MISSIONS = {
+    "living": [
+      { id: "pillbug-home", title: "ダンゴムシが いちばん見つかる場所を 見つけよう", text: "ダンゴムシは、暗くて しめった場所が すき。" },
+      { id: "butterfly-home", title: "チョウが いちばん見つかる場所を 見つけよう", text: "チョウは、花のある 明るい場所で 見つかりやすい。" },
+      { id: "three-places", title: "おなじ生き物を 3つの場所ぜんぶで 調べよう", text: "同じ生き物でも、場所で 見つかり方が ちがう。" }
+    ],
+    "plants": [
+      { id: "flower", title: "花を さかせよう", text: "植物は、芽が出て 葉がふえると、花が さく。" },
+      { id: "fruit", title: "実が なるまで 育てよう", text: "花が さいたあとには、実が できる。" },
+      { id: "same-day", title: "ヒマワリと ホウセンカを 同じ日数で 比べよう", text: "同じ日数でも、植物で 育ち方が ちがう。" }
+    ],
+    "insects": [
+      { id: "pupa", title: "チョウの さなぎを 見つけよう", text: "チョウには、幼虫と 成虫の間に さなぎの時期が ある。" },
+      { id: "two-adults", title: "チョウと バッタの 成虫を 見比べよう", text: "成虫の体は、頭・胸・腹の 3つに 分かれる。" },
+      { id: "no-pupa", title: "バッタの育ちを ぜんぶ見て、さなぎが ないことを たしかめよう", text: "バッタは、さなぎに ならずに 成虫になる。" }
+    ],
+    "windrubber": [
+      { id: "just120", title: "車で 120cm ちょうどに 進ませよう（±10cmまで OK）", text: "力の大きさを 調整すると、進む距離を ねらえる。" },
+      { id: "max200", title: "車で 200cm 進ませよう", text: "力を いちばん大きくすると、車は いちばん遠くまで 進む。" },
+      { id: "same-distance", title: "風と ゴムで 同じ距離を 出そう", text: "ちがう力でも、同じ距離を 出すことが できる。" }
+    ],
+    "sound": [
+      { id: "full-power", title: "ふるえを 100に しよう", text: "強く はじくほど、ふるえが 大きく なる。" },
+      { id: "transmit50", title: "糸で 伝わる強さを 50以上に しよう", text: "糸を ぴんと張ると、ふるえが 伝わりやすい。" },
+      { id: "tight-loose", title: "同じ強さで、糸を 張ったときと ゆるめたときを 比べよう", text: "音を出す物が 同じでも、糸の張り方で 伝わり方が 変わる。" }
+    ],
+    "sun": [
+      { id: "shortest-shadow", title: "影が いちばん短い 時刻を 見つけよう", text: "太陽が いちばん高い 正午ごろ、影は いちばん短い。" },
+      { id: "hottest", title: "地面の温度が いちばん高い 時刻を 見つけよう", text: "日なたの地面は、正午を 過ぎてから あたたかくなる。" },
+      { id: "west-shadow", title: "影が 西がわに 出る時刻を 見つけよう", text: "朝は 太陽が 東に あるので、影は 西に できる。" }
+    ],
+    "light": [
+      { id: "three-mirrors", title: "鏡 3枚で 光を 集めて いちばん明るく しよう", text: "鏡の光を 重ねると、明るさが 増す。" },
+      { id: "to-top", title: "光を 壁の いちばん上に 届けよう", text: "鏡の向きを 変えると、光が 届く高さが 変わる。" },
+      { id: "to-bottom", title: "光を 壁の いちばん下に 届けよう", text: "光は 鏡に当たって はね返り、方向が 変わる。" }
+    ],
+    "electricity": [
+      { id: "light-it", title: "豆電球を つけよう", text: "通り道が 一つの輪に つながると、豆電球が つく。" },
+      { id: "find-blockers", title: "電気を 通さない物を 3つ 見つけよう", text: "プラスチック・ゴム・木は、電気を 通さない。" },
+      { id: "find-conductors", title: "電気を 通す物を 3つ 見つけよう", text: "銅・鉄・アルミなどの 金属は、電気を 通す。" }
+    ],
+    "magnets": [
+      { id: "attract", title: "ちがう極どうしで 引き合わせよう", text: "N極と S極は、引き合う。" },
+      { id: "force100", title: "鉄への力を 100に しよう", text: "磁石に 近いほど、引き付ける力が 強い。" },
+      { id: "three-distances", title: "距離を 3通り 変えて、力を 比べよう", text: "距離が 遠くなるほど、引き付ける力が 弱くなる。" }
+    ],
+    "weight": [
+      { id: "same-weight", title: "形を 変えても 重さが 同じことを たしかめよう", text: "同じ材料・同じ量なら、形を 変えても 重さは 同じ。" },
+      { id: "just24", title: "重さを 24g ちょうどに しよう", text: "材料と 量の 組み合わせで、重さを ねらえる。" },
+      { id: "match-wood-clay", title: "木と 粘土で 同じ重さを 作ろう", text: "材料が ちがっても、量を 変えれば 同じ重さに できる。" }
+    ]
+  };
+  Object.entries(MISSIONS).forEach(([id, items]) => { if (MANIFESTS[id]) MANIFESTS[id].missions = items; });
   
   window.RikaLabManifests = MANIFESTS;
 })();

@@ -332,6 +332,25 @@ ruby rt { font-size: .52em; color: var(--green-dark); }
 .mission-dots { display: flex; gap: 8px; }
 .mission-dots button { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--line); background: #fff; font-weight: 900; }
 .mission-dots button[aria-pressed="true"] { background: var(--lab-accent); border-color: var(--lab-accent); color: #fff; }
+.play-missions { background: #fffdf4; border: 2px solid #f0dcb2; border-radius: 16px; padding: 12px 14px; display: grid; gap: 10px; }
+.play-missions-head { display: flex; align-items: center; gap: 8px; }
+.play-missions-head > span { font-size: 1.3rem; }
+.play-missions-head h3 { margin: 0; font-size: 1.08rem; }
+.play-missions-count { margin-left: auto; font-weight: 900; color: #a06a14; font-size: .9rem; white-space: nowrap; }
+.mission-banner {
+  background: var(--green-pale); border: 2px solid var(--green); color: var(--green-dark);
+  border-radius: 12px; padding: 10px 12px; font-weight: 900; animation: fxPop .35s cubic-bezier(.2, 1.4, .4, 1);
+}
+.play-mission-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.play-mission { display: flex; gap: 10px; align-items: flex-start; background: #fff; border: 2px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.play-mission-mark { font-size: 1.25rem; line-height: 1.3; flex: none; }
+.play-mission-main { display: grid; gap: 2px; }
+.play-mission-main b { font-size: .98rem; line-height: 1.45; }
+.play-mission-main small { color: var(--muted); font-weight: 800; font-size: .82rem; }
+.play-mission.is-done { border-color: var(--green); background: #f4fbf1; }
+.play-mission.is-done .play-mission-main b { color: var(--green-dark); }
+.drag-handle { cursor: grab; }
+.drag-handle:active { cursor: grabbing; }
 .stage-touch-spark { position: absolute; z-index: 3; width: 18px; height: 18px; border: 3px solid var(--lab-accent); border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); animation: stageSpark .52s ease-out forwards; }
 @keyframes stageSpark { 0% { opacity: .9; } 100% { width: 74px; height: 74px; opacity: 0; } }
 .model-disclosure { margin-top: 14px; }
@@ -350,26 +369,46 @@ ruby rt { font-size: .52em; color: var(--green-dark); }
 .life-stage-figure { transform-box: fill-box; transform-origin: center; animation: stageArrive .42s cubic-bezier(.2, .8, .25, 1.2); }
 .force-arrow { stroke-dasharray: 18 12; animation: forceFlow .65s linear infinite; }
 .rubber-stretch { stroke-dasharray: 520; stroke-dashoffset: 520; animation: rubberDraw .42s ease-out forwards; }
-.sim-car { animation: carRoll .55s cubic-bezier(.2, .75, .25, 1); }
-.distance-line { stroke-dasharray: 520; stroke-dashoffset: 520; animation: distanceGrow .58s ease-out forwards; }
 .sound-wave, .sound-rings { stroke-dasharray: 18 10; animation: soundTravel .55s linear infinite; }
 .sound-receiver { transform-box: fill-box; transform-origin: center; animation: receiverPulse .65s ease-in-out infinite alternate; }
-.moving-shadow { transform-box: fill-box; transform-origin: center; animation: shadowSettle .42s ease-out; }
+.moving-shadow { transform-box: fill-box; transform-origin: center; }
 .light-ray { stroke-dasharray: 26 14; stroke-dashoffset: 80; animation: lightTravel .55s linear var(--ray-delay, 0s) infinite; }
 .light-spot { transform-box: fill-box; transform-origin: center; animation: lightGlow .72s ease-in-out infinite alternate; }
 .circuit-path.is-lit { stroke-dasharray: 20 12; animation: electricFlow .55s linear infinite; }
 .circuit-charge { animation: bulbPulse .75s ease-in-out var(--charge-delay, 0s) infinite alternate; }
 .sim-bulb.is-lit, .bulb-glow { transform-box: fill-box; transform-origin: center; animation: bulbPulse .75s ease-in-out infinite alternate; }
 .tested-material { animation: materialDrop .34s ease-out; }
-.magnet-left.attract { animation: magnetLeftAttract .48s ease-out; }
-.magnet-right.attract { animation: magnetRightAttract .48s ease-out; }
-.magnet-left.repel { animation: magnetLeftRepel .48s ease-out; }
-.magnet-right.repel { animation: magnetRightRepel .48s ease-out; }
 .magnet-test-object.sticks { animation: ironJump .65s ease-in-out infinite alternate; }
+.bar-magnet { cursor: pointer; }
 .weight-object { transform-box: fill-box; transform-origin: center; animation: weightSettle .42s cubic-bezier(.2, .8, .25, 1.25); }
 .flame { transform-origin: center; animation: flamePulse .7s ease-in-out infinite alternate; }
 .particle, .water-particle, .blood-cell, .sediment { animation: particleFloat 2.8s ease-in-out infinite; animation-delay: var(--delay, 0s); }
 .current { animation: currentMove 1.2s linear infinite; animation-delay: var(--delay, 0s); }
+/* ---- 第2弾：場面の動き（third-labs.js の新しいクラス） ---- */
+.sim-stage.is-direct-manipulating .drag-handle { filter: drop-shadow(0 0 7px rgba(255, 190, 60, .9)); }
+.grass-sway { transform-box: fill-box; transform-origin: 50% 100%; animation: grassSway 2.6s ease-in-out var(--sway-delay, 0s) infinite alternate; }
+@keyframes grassSway { from { transform: rotate(-2.6deg); } to { transform: rotate(2.6deg); } }
+.cloud-drift { animation: cloudDrift 7s ease-in-out infinite alternate; }
+@keyframes cloudDrift { from { transform: translateX(-9px); } to { transform: translateX(11px); } }
+.wing-flap { transform-box: fill-box; animation: wingFlap .45s ease-in-out infinite alternate; }
+.wing-flap-l { transform-origin: 100% 60%; }
+.wing-flap-r { transform-origin: 0% 60%; animation-name: wingFlapR; }
+@keyframes wingFlap { from { transform: rotate(7deg); } to { transform: rotate(-11deg); } }
+@keyframes wingFlapR { from { transform: rotate(-7deg); } to { transform: rotate(11deg); } }
+.larva-wiggle { animation: larvaWiggle .7s ease-in-out infinite alternate; }
+@keyframes larvaWiggle { from { transform: translateX(-3px) rotate(-.8deg); } to { transform: translateX(3px) rotate(.8deg); } }
+.stage-ghost { pointer-events: none; animation: ghostOut .5s ease-out forwards; }
+@keyframes ghostOut { from { opacity: .45; transform: scale(.97); } to { opacity: 0; transform: scale(1.04); } }
+.wind-particle { animation: windFly 2s linear infinite; }
+@keyframes windFly { 0% { transform: translateX(0); opacity: 0; } 14% { opacity: .85; } 88% { opacity: .85; } 100% { transform: translateX(300px); opacity: 0; } }
+.sound-vibe { animation: vibeShake .09s linear infinite alternate; }
+@keyframes vibeShake { from { transform: translateY(calc(var(--vy, 0px) * -1)); } to { transform: translateY(var(--vy, 0px)); } }
+.sound-ring { transform-box: fill-box; transform-origin: center; animation: ringGrow 1.7s ease-out var(--rdelay, 0s) infinite; }
+@keyframes ringGrow { 0% { transform: scale(.4); opacity: .45; } 100% { transform: scale(1.65); opacity: 0; } }
+.string-pulse { animation: stringPulse 1.35s linear infinite; }
+@keyframes stringPulse { 0% { transform: translateX(0); opacity: 0; } 12% { opacity: .9; } 88% { opacity: .9; } 100% { transform: translateX(298px); opacity: 0; } }
+.mirror-spark { transform-box: fill-box; transform-origin: center; animation: sparkPulse 1.1s ease-in-out infinite alternate; }
+@keyframes sparkPulse { from { transform: scale(.7) rotate(0deg); } to { transform: scale(1.18) rotate(22deg); } }
 @keyframes bugScout { from { transform: translate(-3px, 1px) rotate(-4deg); } to { transform: translate(4px, -3px) rotate(4deg); } }
 @keyframes sunPulse { 50% { transform: scale(1.08); } }
 @keyframes stemGrow { to { stroke-dashoffset: 0; } }

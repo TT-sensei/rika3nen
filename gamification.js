@@ -38,6 +38,7 @@
   const PHASE_XP = { knowledge: 10, preparation: 16, consideration: 18 };
   const RETRY_XP = 5;
   const UNIT_COMPLETE_XP = 35;
+  const LAB_MISSION_XP = 10;
 
   function rankInfo(xp) {
     const safeXp = Math.max(0, Math.floor(Number(xp) || 0));
@@ -62,10 +63,12 @@
     };
   }
 
-  // 図鑑は 10単元 ×（3フェイズの発見＋大発見）＝ 40件。
+  // 図鑑は 10単元 ×（3フェイズの発見＋大発見＋LABミッション発見3件）＝ 70件。
+  // LABミッションの定義は labs/manifests.js（RikaLabManifests）にあり、実行時に読む。
   function catalogItems(discoveries) {
     const got = discoveries || {};
     const items = [];
+    const manifests = window.RikaLabManifests || {};
     Object.keys(FACTS).forEach(unitId => {
       ["knowledge", "preparation", "consideration"].forEach(phase => {
         const key = unitId + "." + phase;
@@ -83,13 +86,24 @@
         title: found ? "大発見" : "大発見（未発見）",
         text: found ? FACTS[unitId] : "単元を最後まで進めると見つかるよ"
       });
+      const missions = (manifests[unitId] && manifests[unitId].missions) || [];
+      missions.forEach(mission => {
+        const mKey = "lab." + unitId + "." + mission.id;
+        const mFound = Boolean(got[mKey]);
+        items.push({
+          key: mKey, unitId, kind: "lab", found: mFound,
+          title: mFound ? mission.title : "？？？",
+          text: mFound ? mission.text : "LABのあそびミッションを達成すると見つかるよ"
+        });
+      });
     });
     return items;
   }
 
   window.RikaGame = {
-    RANKS, FACTS, PHASE_DISCOVERY, PHASE_XP, RETRY_XP, UNIT_COMPLETE_XP,
+    RANKS, FACTS, PHASE_DISCOVERY, PHASE_XP, RETRY_XP, UNIT_COMPLETE_XP, LAB_MISSION_XP,
     rankInfo, catalogItems,
-    TOTAL_DISCOVERIES: Object.keys(FACTS).length * 4
+    // 総数はミッション定義を含むため、実行時に数える（読み込み順に依存しない）。
+    get TOTAL_DISCOVERIES() { return catalogItems({}).length; }
   };
 })();

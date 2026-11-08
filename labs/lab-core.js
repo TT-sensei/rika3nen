@@ -48,7 +48,7 @@
         challenges.map((item, index) => '<button type="button" aria-pressed="' + (index === 0) + '" data-mission-index="' + index + '">' + (index + 1) + '</button>').join("") + '</div>';
       const missionDetails = document.createElement("details");
       missionDetails.className = "mission-details";
-      missionDetails.innerHTML = '<summary>🎯 あそびミッション（やってみたい人）</summary>';
+      missionDetails.innerHTML = '<summary>🔎 はっけんミッション（やってみたい人）</summary>';
       missionDetails.append(mission);
       const controlArea = view.querySelector("[data-control-panel]");
       controlArea.insertAdjacentElement("afterend", missionDetails);
@@ -218,9 +218,66 @@
     ).join("") + '</div><div class="instant-result"><strong>結果</strong><p>' + esc(config.message || "") + '</p></div>' + (config.note ? '<p class="instant-note">' + esc(config.note) + '</p>' : "");
   }
 
+  // あそびミッションのパネル。manifest.missions（タイトル・発見文）を一覧表示し、
+  // LABから渡される状態スナップショットで達成判定する。達成は門番ではなく記録のみ。
+  // checks/progress は単元ごとの関数表（third-labs.js）で、mem はミッションごとの記憶。
+  function missionPanel(view, manifest, { isDone, onAchieve, checks, progress } = {}) {
+    const defs = Array.isArray(manifest.missions) ? manifest.missions : [];
+    if (!defs.length) return () => {};
+    const checkMap = checks || {};
+    const progressMap = progress || {};
+    const panel = document.createElement("section");
+    panel.className = "play-missions";
+    panel.setAttribute("aria-label", "あそびミッション");
+    const controlArea = view.panel || (view.root && view.root.querySelector("[data-control-panel]"));
+    if (!controlArea) return () => {};
+    controlArea.insertAdjacentElement("afterend", panel);
+    const mems = defs.map(() => ({}));
+    const achieved = defs.map(def => { try { return Boolean(isDone && isDone(def.id)); } catch (_) { return false; } });
+    let snapshotCount = 0;
+    const render = justAchieved => {
+      const remaining = achieved.filter(done => !done).length;
+      panel.innerHTML =
+        '<div class="play-missions-head"><span aria-hidden="true">🎯</span><h3>あそびミッション</h3>' +
+        '<span class="play-missions-count">' + (defs.length - remaining) + ' / ' + defs.length + ' 達成</span></div>' +
+        (justAchieved
+          ? '<p class="mission-banner" role="status">🎉 ミッション達成！「' + esc(justAchieved.title) + '」発見図鑑に記録したよ</p>'
+          : "") +
+        '<ul class="play-mission-list">' + defs.map((def, index) => {
+          const done = achieved[index];
+          const prog = !done && typeof progressMap[def.id] === "function" ? progressMap[def.id](mems[index]) : "";
+          return '<li class="play-mission' + (done ? " is-done" : "") + '">' +
+            '<span class="play-mission-mark" aria-hidden="true">' + (done ? "✅" : "🎯") + "</span>" +
+            '<span class="play-mission-main"><b>' + esc(def.title) + "</b>" +
+            (done ? "<small>発見ずみ</small>" : prog ? "<small>" + esc(prog) + "</small>" : "") + "</span></li>";
+        }).join("") + "</ul>";
+    };
+    render(null);
+    return snapshot => {
+      if (!snapshot) return;
+      snapshotCount += 1;
+      // 初回の描画（LABを開いた直後の初期状態）では達成にしない。記憶の記録だけ行う。
+      const isInitial = snapshotCount <= 1;
+      let justAchieved = null;
+      defs.forEach((def, index) => {
+        if (achieved[index]) return;
+        const check = checkMap[def.id];
+        if (typeof check !== "function") return;
+        let ok = false;
+        try { ok = Boolean(check(snapshot, mems[index])); } catch (_) { ok = false; }
+        if (ok && !isInitial) {
+          achieved[index] = true;
+          justAchieved = def;
+          try { onAchieve && onAchieve(def); } catch (_) {}
+        }
+      });
+      render(justAchieved);
+    };
+  }
+
   function renderError(root, message) {
     root.innerHTML = '<section class="empty-state lab-error"><h1>LABを読み込めませんでした</h1><p>' + esc(message || "画面を更新して、もう一度試してください。") + '</p><button class="primary-button" type="button" data-lab-home>シミュレーション一覧へ</button></section>';
   }
 
-  window.RikaThreeLabCore = { esc, shell, section, range, options, action, presets, randomizeOne, renderReadout, renderError };
+  window.RikaThreeLabCore = { esc, shell, section, range, options, action, presets, randomizeOne, renderReadout, renderError, missionPanel };
 })();
